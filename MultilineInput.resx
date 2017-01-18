@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="textBox1.Text" xml:space="preserve">
+    <value>C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\sqlservr.exe	0x00007FF6191C0000
+C:\windows\SYSTEM32\ntdll.dll	0x00007FFB0C1C0000
+C:\windows\System32\KERNEL32.DLL	0x00007FFB0B4B0000
+C:\windows\System32\KERNELBASE.dll	0x00007FFB092D0000
+C:\windows\System32\ADVAPI32.dll	0x00007FFB0BC20000
+C:\windows\System32\msvcrt.dll	0x00007FFB09F00000
+C:\windows\System32\sechost.dll	0x00007FFB09EA0000
+C:\windows\System32\RPCRT4.dll	0x00007FFB09D70000
+C:\windows\System32\ole32.dll	0x00007FFB0B560000
+C:\windows\System32\combase.dll	0x00007FFB098E0000
+C:\windows\System32\ucrtbase.dll	0x00007FFB09540000
+C:\windows\System32\bcryptPrimitives.dll	0x00007FFB08AD0000
+C:\windows\System32\GDI32.dll	0x00007FFB0BCD0000
+C:\windows\System32\gdi32full.dll	0x00007FFB086D0000
+C:\windows\System32\USER32.dll	0x00007FFB0BF50000
+C:\windows\System32\win32u.dll	0x00007FFB086B0000
+C:\windows\SYSTEM32\NETAPI32.dll	0x00007FFB04760000
+C:\windows\SYSTEM32\pdh.dll	0x00007FFB04C20000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\sqlmin.dll	0x00007FFAE0CB0000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\SQLOS.dll	0x00007FFAE8F70000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\sqllang.dll	0x00007FFADE700000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\sqlTsEs.dll	0x00007FFADDE70000
+C:\windows\System32\OLEAUT32.dll	0x00007FFB0B710000
+C:\windows\System32\msvcp_win.dll	0x00007FFB08A30000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\sqldk.dll	0x00007FFADD9A0000
+C:\windows\System32\CRYPT32.dll	0x00007FFB08860000
+C:\windows\System32\MSASN1.dll	0x00007FFB08670000
+C:\windows\System32\WS2_32.dll	0x00007FFB0BE20000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\opends60.dll	0x00007FFAE8F80000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\qds.dll	0x00007FFAE8E90000
+C:\windows\SYSTEM32\MSVCP120.dll	0x00007FFAF1420000
+C:\windows\SYSTEM32\MSVCR120.dll	0x00007FFAFDFA0000
+C:\windows\SYSTEM32\Secur32.dll	0x00007FFB07680000
+C:\windows\SYSTEM32\WINHTTP.dll	0x00007FFB04C70000
+C:\windows\SYSTEM32\ODBC32.dll	0x00007FFAF40A0000
+C:\windows\SYSTEM32\bcrypt.dll	0x00007FFB084C0000
+C:\windows\SYSTEM32\WINMM.dll	0x00007FFB06860000
+C:\windows\SYSTEM32\WINMMBASE.dll	0x00007FFB06830000
+C:\windows\System32\cfgmgr32.dll	0x00007FFB094F0000
+C:\windows\SYSTEM32\DPAPI.dll	0x00007FFB07830000
+C:\windows\SYSTEM32\SSPICLI.DLL	0x00007FFB082F0000
+C:\windows\SYSTEM32\NETUTILS.DLL	0x00007FFB07D80000
+C:\windows\System32\WINTRUST.dll	0x00007FFB096F0000
+C:\windows\SYSTEM32\USERENV.dll	0x00007FFB07D90000
+C:\windows\SYSTEM32\AUTHZ.dll	0x00007FFB074F0000
+C:\windows\System32\profapi.dll	0x00007FFB08690000
+C:\windows\SYSTEM32\XmlLite.dll	0x00007FFB00EE0000
+C:\windows\SYSTEM32\dhcpcsvc.DLL	0x00007FFB052C0000
+C:\windows\System32\NSI.dll	0x00007FFB0BE10000
+C:\windows\SYSTEM32\LOGONCLI.DLL	0x00007FFB05BC0000
+C:\windows\SYSTEM32\SAMCLI.DLL	0x00007FFB037E0000
+C:\windows\System32\psapi.dll	0x00007FFB0BC10000
+C:\windows\System32\kernel.appcore.dll	0x00007FFB08680000
+C:\Program Files\Microsoft SQL Server\130\Shared\instapi130.dll	0x00007FFADC190000
+C:\windows\SYSTEM32\CRYPTSP.dll	0x00007FFB080E0000
+C:\windows\system32\rsaenh.dll	0x00007FFB077A0000
+C:\windows\SYSTEM32\CRYPTBASE.dll	0x00007FFB080C0000
+C:\windows\System32\imagehlp.dll	0x00007FFB09BB0000
+C:\windows\SYSTEM32\gpapi.dll	0x00007FFB07280000
+C:\windows\SYSTEM32\wkscli.dll	0x00007FFB043D0000
+C:\windows\SYSTEM32\cscapi.dll	0x00007FFAEC220000
+C:\windows\system32\CLUSAPI.DLL	0x00007FFAEF910000
+C:\windows\SYSTEM32\DNSAPI.dll	0x00007FFB07CE0000
+C:\windows\SYSTEM32\IPHLPAPI.DLL	0x00007FFB07CA0000
+C:\windows\system32\RESUTILS.DLL	0x00007FFAEFCD0000
+C:\windows\SYSTEM32\VERSION.dll	0x00007FFB03A00000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\hkruntime.dll	0x00007FFAD8550000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\hkcompile.dll	0x00007FFAD7F30000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\hkengine.dll	0x00007FFAD72E0000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\dbghelp.dll	0x0000000056D00000
+C:\windows\System32\SHLWAPI.dll	0x00007FFB0BE90000
+C:\windows\system32\msv1_0.DLL	0x00007FFB07E90000
+C:\windows\SYSTEM32\NtlmShared.dll	0x00007FFB08130000
+C:\windows\SYSTEM32\cryptdll.dll	0x00007FFB08100000
+C:\windows\system32\kerberos.DLL	0x00007FFB07F60000
+C:\windows\system32\schannel.DLL	0x00007FFB076E0000
+C:\windows\SYSTEM32\MSCOREE.DLL	0x00007FFAFB140000
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\mscoreei.dll	0x00007FFAF3AD0000
+C:\windows\SYSTEM32\SqlServerSpatial130.dll	0x00007FFAD70B0000
+C:\windows\system32\security.dll	0x0000027639770000
+C:\windows\System32\clbcatq.dll	0x00007FFB0C0C0000
+C:\windows\SYSTEM32\sqlncli11.dll	0x00007FFAD6930000
+C:\windows\System32\COMDLG32.dll	0x00007FFB0BD10000
+C:\windows\System32\shcore.dll	0x00007FFB09220000
+C:\windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_5.82.14393.447_none_0d5aa7fbb6d35646\COMCTL32.dll	0x00007FFB026F0000
+C:\windows\System32\SHELL32.dll	0x00007FFB09FA0000
+C:\windows\System32\windows.storage.dll	0x00007FFB08B40000
+C:\windows\System32\powrprof.dll	0x00007FFB08620000
+C:\windows\SYSTEM32\MSVCR100.dll	0x0000000056780000
+C:\windows\SYSTEM32\netbios.dll	0x00007FFAE8C90000
+C:\Program Files\Microsoft SQL Server\130\Shared\sqlnclirda11.dll	0x0000000056420000
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\clr.dll	0x00007FFAF2930000
+C:\windows\SYSTEM32\MSVCR120_CLR0400.dll	0x00007FFAF1D30000
+C:\windows\assembly\NativeImages_v4.0.30319_64\mscorlib\e96b4590c579d08edc2e60cc3e5ae997\mscorlib.ni.dll	0x00007FFAEFDD0000
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\clrjit.dll	0x00007FFAEEDF0000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\BatchParser.dll	0x00007FFADB930000
+C:\windows\SYSTEM32\SRVCLI.DLL	0x00007FFAF2860000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\ftimport.dll	0x0000000060000000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\MSFTE.DLL	0x0000000049980000
+C:\windows\SYSTEM32\ncrypt.dll	0x00007FFB081D0000
+C:\windows\SYSTEM32\NTASN1.dll	0x00007FFB08190000
+C:\windows\SYSTEM32\mskeyprotect.dll	0x00007FFADB8A0000
+C:\windows\SYSTEM32\ntmarta.dll	0x00007FFB06F90000
+C:\windows\system32\mswsock.dll	0x00007FFB07F00000
+C:\windows\system32\wshqos.dll	0x00007FFAF27B0000
+C:\windows\SYSTEM32\wshtcpip.DLL	0x00007FFAF2820000
+C:\windows\SYSTEM32\wship6.dll	0x00007FFAF2810000
+C:\windows\system32\ntdsapi.dll	0x00007FFB026A0000
+C:\windows\SYSTEM32\DSPARSE.DLL	0x00007FFB032D0000
+C:\Windows\System32\rasadhlp.dll	0x00007FFB029C0000
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\perfcounter.dll	0x00007FFADC590000
+C:\windows\System32\aspnet_counters.dll	0x00007FFADA770000
+C:\windows\Microsoft.NET\Framework64\v4.0.30319\aspnet_perf.dll	0x00007FFADA760000
+C:\windows\System32\fwpuclnt.dll	0x00007FFB05960000
+C:\Program Files\Microsoft SQL Server\140\Shared\instapi140.dll	0x00007FFAE8CF0000
+C:\windows\SYSTEM32\rasman.dll	0x00007FFADBC10000
+C:\windows\System32\msxml3.dll	0x00007FFAEEFD0000
+C:\Windows\System32\cryptnet.dll	0x00007FFADC900000
+c:\sqldb\xtp\10\xtp_t_10_661577395_183094481102518_3.dll	0x00007FFADB320000
+c:\sqldb\xtp\10\xtp_t_10_613577224_183094481087904_3.dll	0x00007FFAD5A10000
+c:\sqldb\xtp\10\xtp_t_10_597577167_183094481087552_3.dll	0x00007FFAFFD50000
+c:\sqldb\xtp\11\xtp_t_11_1243151474_182643496265976_1.dll	0x00007FFAD5340000
+c:\sqldb\xtp\12\xtp_t_12_1234103437_182643497947493_1.dll	0x00007FFAFFD80000
+c:\sqldb\xtp\12\xtp_t_12_1010102639_182643497945850_1.dll	0x00007FFAD5030000
+c:\sqldb\xtp\11\xtp_t_11_1211151360_182643496264490_1.dll	0x00007FFAD5000000
+c:\sqldb\xtp\12\xtp_t_12_1202103323_182643497947254_1.dll	0x00007FFAD4FE0000
+c:\sqldb\xtp\11\xtp_t_11_1179151246_182643496264181_1.dll	0x00007FFAD4FC0000
+c:\sqldb\xtp\12\xtp_t_12_1170103209_182643497947015_1.dll	0x00007FFAD4FA0000
+c:\sqldb\xtp\12\xtp_t_12_1138103095_182643497946774_1.dll	0x00007FFAD4DC0000
+c:\sqldb\xtp\12\xtp_t_12_1074102867_182643497946296_1.dll	0x00007FFAD59F0000
+c:\sqldb\xtp\12\xtp_t_12_1042102753_182643497946057_1.dll	0x00007FFAD59D0000
+c:\sqldb\xtp\12\xtp_t_12_978102525_182643497945647_1.dll	0x00007FFAD58A0000
+c:\sqldb\xtp\11\xtp_t_11_1831677573_183124531340504_1.dll	0x00007FFAD5870000
+c:\sqldb\xtp\12\xtp_t_12_946102411_182643497945405_1.dll	0x00007FFAD57F0000
+c:\sqldb\xtp\11\xtp_t_11_1863677687_183124531340821_1.dll	0x00007FFAD4D60000
+c:\sqldb\xtp\12\xtp_t_12_882102183_182643497944852_1.dll	0x00007FFAD59B0000
+c:\sqldb\xtp\12\xtp_t_12_1106102981_182643497946534_1.dll	0x00007FFAD5990000
+c:\sqldb\xtp\12\xtp_t_12_914102297_182643497945166_1.dll	0x00007FFAD5950000
+C:\windows\system32\ncryptsslp.dll	0x00007FFADBF80000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\xplog70.dll	0x00007FFAF1790000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\xpsqlbot.dll	0x00007FFB065C0000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\xpstar.dll	0x00007FFAF13B0000
+C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn\SQLSCM.dll	0x00007FFB05800000
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\Sort00060101.dll	0x00007FFAEB2E0000</value>
+  </data>
+</root>
