@@ -1,26 +1,33 @@
-# Installation
+Installation
+------------
+
 Please refer to the Releases section for a ready-to-run package and pre-requisites.
 
-# Usage
+Usage
+-----
+
 The tool comes with some pre-populated examples in the textboxes, just follow that example with your real-world stack(s).
 
 The textbox on the left accepts the following types of input:
 
-* Individual callstack extracted from XML, with DLL + offset notation
-* Multiple callstacks in Histogram XML markup (multiple-instance case of above)
-* Older format with just virtual addresses [1]
-* dll!Ordinal### format [2]
+	- Individual callstack extracted from XML, with DLL + offset notation
+	- Multiple callstacks in Histogram XML markup (multiple-instance case of above)
+	- Older format with just virtual addresses [1]
+	- dll!Ordinal### format [2]
 
 In all cases you must provided a symbol search path [3][4]
 
-# Building
+Building
+--------
+
 We welcome contributions - if you are interested to help, please fork the project, and submit your contributions via pull requests. Do note:
 
-* You will need VS2015 installed to build this solution
-* Once you load the SLN, fix the reference to msdia140typelib_clr0200.dll (found under C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow)
-* Using Package Manager, add Nuget reference for CLRMD as described at https://www.nuget.org/packages/Microsoft.Diagnostics.Runtime
+1. You will need VS2015 installed to build this solution
+2. Once you load the SLN, fix the reference to msdia140typelib_clr0200.dll (found under C:\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow)
+3. Using Package Manager, add Nuget reference for CLRMD as described at https://www.nuget.org/packages/Microsoft.Diagnostics.Runtime
 
-# Notes
+Notes
+-----
 
 [1] In this case you need to populate the Base Addresses with the output of the following query from the actual SQL instance when the XE was captured:
 
