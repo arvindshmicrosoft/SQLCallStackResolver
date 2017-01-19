@@ -26,7 +26,7 @@ The textbox on the left accepts the following types of input:
 	- Older format with just virtual addresses [1]
 	- dll!Ordinal### format [2]
 
-In all cases you must provided a symbol search path [3]
+In all cases you must provided a symbol search path [3][4]
 
 [1] In this case you need to populate the Base Addresses with the output of the following query from the actual SQL instance when the XE was captured:
 
@@ -35,3 +35,5 @@ In all cases you must provided a symbol search path [3]
 [2] In this case, you need to press the Module Paths button where you will be prompted to enter the path to a folder containing the images of the DLLs involved. For example you can point to C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\Binn for SQL 2016 RTM CU1
 
 [3] This has to be path to a folder or a set of such paths (can be UNC as well) each separated with a semicolon (;). Use the checkbox to specify if sub-folders need to be checked in each case. If multiple paths might contain matching PDBs, the first path from the left which contained the PDB wins. There is no means to know if the PDB is matched with the build that your are using - you need to ensure that the folder path(s) are correct! 
+
+[4] To obtain public PDBs for major SQL releases, PowerShell scripts are available at https://github.com/arvindshmicrosoft/SQLCallStackResolver/wiki/Obtaining-symbol-files-(.PDB)-for-SQL-Server-Releases
