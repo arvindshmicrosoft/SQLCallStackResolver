@@ -10,6 +10,7 @@ The textbox on the left accepts the following types of input:
 * Multiple callstacks in Histogram XML markup (multiple-instance case of above)
 * Older format with just virtual addresses [1]
 * dll!Ordinal### format [2]
+* Output from SQLDumper (SQLDumpNNNN.TXT file) - at least the sections which have stack frames [5]
 
 In all cases you must provided a symbol search path [3][4]
 
@@ -31,3 +32,5 @@ We welcome contributions - if you are interested to help, please fork the projec
 [3] This has to be path to a folder or a set of such paths (can be UNC as well) each separated with a semicolon (;). Use the checkbox to specify if sub-folders need to be checked in each case. If multiple paths might contain matching PDBs, the first path from the left which contained the PDB wins. There is no means to know if the PDB is matched with the build that your are using - you need to ensure that the folder path(s) are correct! 
 
 [4] To obtain public PDBs for major SQL releases, PowerShell scripts are available at https://github.com/arvindshmicrosoft/SQLCallStackResolver/wiki/Obtaining-symbol-files-(.PDB)-for-SQL-Server-Releases
+
+[5] This is partial support at the moment - subsequently I will add a 'cleansing' option where it will strip out just the 'Short Stack Dump' sections and resolve the frames therein.
