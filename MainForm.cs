@@ -95,6 +95,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 finalOutput.SelectAll();
             }
-        }        
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            var finalCmds = this._resolver.ObtainPDBDownloadCommandsfromDLL(binaryPaths.Text, DLLrecurse.Checked);
+
+            if (string.IsNullOrEmpty(finalCmds))
+            {
+                return;
+            }
+
+            var outputCmds = new MultilineInput(finalCmds);
+            outputCmds.ShowDialog(this);
+        }
     }
 }

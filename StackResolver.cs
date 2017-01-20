@@ -87,7 +87,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // sqlmin.dll!Ordinal1634 + 0x76c
 
             // define a regex to identify such ordinal based frames
-            var rgxOrdinalNotation = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*0[xX]");
+            var rgxOrdinalNotation = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*(0[xX])*");
             var matchednotations = rgxOrdinalNotation.Matches(callstack);
 
             var moduleNames = new List<string>();
@@ -121,7 +121,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // finally do a pattern based replace
             // the replace method calls a delegate (ReplaceOrdinalWithRealOffset) which figures out the start address of the ordinal and 
             // then computes the actual offset
-            var fullpattern = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*0[xX](?<offset>[0-9a-fA-F]+)\s*");
+            var fullpattern = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
             return fullpattern.Replace(callstack, ReplaceOrdinalWithRealOffset);
         }
 
@@ -256,7 +256,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             // using the ".dll!0x" to locate the module names
-            var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+0x");
+            var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+(0[xX])*");
             var matchedModuleNames = rgxModuleName.Matches(reconstructedCallstack.ToString());
 
             foreach (Match moduleMatch in matchedModuleNames)
@@ -282,7 +282,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             var finalCallstack = new StringBuilder();
 
-            var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+\s*0[xX](?<offset>[0-9a-fA-F]+)\s*");
+            var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
 
             foreach (var currentFrame in callStackLines)
             {
@@ -571,6 +571,72 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             return finalCallstack.ToString();
+        }
+
+        /// <summary>
+        /// This method generates a PowerShell script to automate download of matched PDBs from the public symbol server.
+        /// </summary>
+        /// <param name="dllSearchPath"></param>
+        /// <param name="recurse"></param>
+        /// <returns></returns>
+        internal string ObtainPDBDownloadCommandsfromDLL(string dllSearchPath, bool recurse)
+        {
+            if (string.IsNullOrEmpty(dllSearchPath))
+            {
+                return null;
+            }
+
+            var moduleNames = new string[] { "sqldk", "sqlmin", "sqllang", "sqltses", "sqlaccess", "qds", "hkruntime", "hkengine", "hkcompile", "sqlos", "sqlservr" };
+
+            var finalCommand = new StringBuilder();
+
+            finalCommand.AppendLine("\tNew-Item -Type Directory -Path <somepath> -ErrorAction SilentlyContinue");
+
+            foreach (var currentModule in moduleNames)
+            {
+                var splitRootPaths = dllSearchPath.Split(';');
+                string finalFilePath = null;
+
+                foreach (var currPath in splitRootPaths)
+                {
+                    var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+                    if (foundFiles.Count() > 0)
+                    {
+                        finalFilePath = foundFiles.First();
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(finalFilePath))
+                {
+                    using (var dllFile = new PEFile(finalFilePath))
+                    {
+                        string pdbName;
+                        Guid pdbGuid;
+                        int pdbAge;
+
+                        dllFile.GetPdbSignature(out pdbName, out pdbGuid, out pdbAge);
+
+                        pdbName = pdbName.Replace(".pdb", "");
+
+                        var signaturePlusAge = pdbGuid.ToString("N") + pdbAge.ToString();
+                        var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
+
+                        finalCommand.Append("\t");
+                        finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'http://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pd_' -OutFile '<somepath>\{0}.cab' # File version {2}", pdbName, signaturePlusAge, fileVersion);
+                        finalCommand.AppendLine();
+                    }
+                }
+            }
+
+            finalCommand.Append("\t");
+            finalCommand.AppendLine(@"New-Item -Type Directory -Path <somepath>\extracted -ErrorAction SilentlyContinue");
+
+            finalCommand.Append("\t");
+            finalCommand.AppendLine(@"expand.exe -r <somepath>\*.cab <somepath>\extracted");
+
+            return finalCommand.ToString();
         }
     }
 

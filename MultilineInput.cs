@@ -53,5 +53,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return this.textBox1.Text;
             }
         }
+
+        private void textBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.A)
+            {
+                textBox1.SelectAll();
+            }
+        }
     }
 }
