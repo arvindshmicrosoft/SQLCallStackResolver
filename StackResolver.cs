@@ -365,12 +365,39 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var rva = Convert.ToUInt32(offset, 16);
 
             // process the function name (symbol)
+            // initially we look for 'block' symbols, which have a parent function
+            // typically this is seen in kernelbase.dll 
+            // (not very important for XE callstacks but important if you have an assert or non-yielding stack in SQLDUMPnnnn.txt files...)
             _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
-                SymTagEnum.SymTagPublicSymbol,
+                SymTagEnum.SymTagBlock,
                 out mysym);
+
+            if (mysym != null)
+            {
+                // if we did find a block symbol then we look for its parent
+                mysym = mysym.lexicalParent;
+            }
+            else
+            {
+                // we did not find a block symbol, so let's see if we get a Function symbol itself
+                // generally this is going to return mysym as null for most users (because public PDBs do not tag the functions as Function
+                // they instead are tagged as PublicSymbol)
+                _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
+                    SymTagEnum.SymTagFunction,
+                    out mysym);
+
+                if (mysym == null)
+                {
+                    // based on previous remarks, look for public symbol near the offset / RVA
+                    _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
+                        SymTagEnum.SymTagPublicSymbol,
+                        out mysym);
+                }
+            }
 
             if (mysym == null)
             {
+                // if all attempts to locate a matching symbol have failed, return null
                 return null;
             }
 
