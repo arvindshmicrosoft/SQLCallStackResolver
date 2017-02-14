@@ -47,6 +47,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using Microsoft.Diagnostics.Runtime.Utilities;
     using System.IO.MemoryMappedFiles;
     using Microsoft.Diagnostics.Runtime.Interop;
+    using Microsoft.SqlServer.XEvent;
+    using Microsoft.SqlServer.XEvent.Linq;
 
     class StackResolver
     {
@@ -123,6 +125,61 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // then computes the actual offset
             var fullpattern = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
             return fullpattern.Replace(callstack, ReplaceOrdinalWithRealOffset);
+        }
+
+        /// <summary>
+        /// Read a XEL file, consume all callstacks, hash them and return the equivalent XML
+        /// </summary>
+        /// <param name="xelFileName">Full path to the XEL file to read</param>
+        /// <returns>XML equivalent of the histogram corresponding to these events</returns>
+        internal string GetXMLEquivalent(string xelFileName)
+        {
+            if (!File.Exists(xelFileName))
+            {
+                return null;
+            }
+
+            var callstackSlots = new Dictionary<string, long>();
+            var xmlEquivalent = new StringBuilder();
+
+            using (var xelEvents = new QueryableXEventData(xelFileName))
+            {
+                Parallel.ForEach(xelEvents, evt =>
+                {
+                    foreach (PublishedAction act in evt.Actions)
+                    {
+                        if (act.Value is CallStack)
+                        {
+                            CallStack castStack = (act.Value as CallStack);
+                            var callStackString = castStack.ToString();
+
+                            lock (callstackSlots)
+                            {
+                                if (!callstackSlots.ContainsKey(callStackString))
+                                {
+                                    callstackSlots.Add(callStackString, 1);
+                                }
+                                else
+                                {
+                                    callstackSlots[callStackString]++;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            xmlEquivalent.AppendLine("<HistogramTarget truncated=\"0\" buckets=\"256\">");
+
+            foreach (KeyValuePair<string, long> item in callstackSlots.OrderByDescending(key => key.Value))
+            {
+                xmlEquivalent.AppendFormat("<Slot count=\"{0}\"><value>{1}</value>", callstackSlots[item.Key], item.Key);
+                xmlEquivalent.AppendLine();
+            }
+
+            xmlEquivalent.AppendLine("</HistogramTarget>");
+
+            return xmlEquivalent.ToString();
         }
 
         /// <summary>
@@ -275,10 +332,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// Runs through each of the frames in a call stack and looks up symbols for each
         /// </summary>
-        /// <param name="_diautils"></param>
-        /// <param name="callStackLines"></param>
+        /// <param name="_diautils">The DIA helper instance</param>
+        /// <param name="callStackLines">Call stack string</param>
+        /// <param name="includeSourceInfo">Whether to include source / line info</param>
         /// <returns></returns>
-        private string ResolveSymbols(Dictionary<string, DiaUtil> _diautils, string[] callStackLines)
+        private string ResolveSymbols(Dictionary<string, 
+            DiaUtil> _diautils, 
+            string[] callStackLines,
+            bool includeSourceInfo)
         {
             var finalCallstack = new StringBuilder();
 
@@ -293,7 +354,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     var matchedModuleName = match.Groups["module"].Value;
                     if (_diautils.ContainsKey(matchedModuleName))
                     {
-                        string processedFrame = ProcessFrameModuleOffset(_diautils, matchedModuleName, match.Groups["offset"].Value);
+                        string processedFrame = ProcessFrameModuleOffset(_diautils, 
+                            matchedModuleName, 
+                            match.Groups["offset"].Value,
+                            includeSourceInfo
+                            );
 
                         if (!string.IsNullOrEmpty(processedFrame))
                         {
@@ -353,11 +418,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// This is the most important function in this whole utility! It uses DIA to lookup the symbol based on RVA offset
         /// It also looks up line number information if available and then formats all of this information for returning to caller
         /// </summary>
-        /// <param name="_diautils"></param>
-        /// <param name="moduleName"></param>
-        /// <param name="offset"></param>
+        /// <param name="_diautils">The DIA helper instance</param>
+        /// <param name="moduleName">Module name</param>
+        /// <param name="offset">RVA offset within the module</param>
+        /// <param name="includeSourceInfo">Whether to include source / line info</param>
         /// <returns></returns>
-        private string ProcessFrameModuleOffset(Dictionary<string, DiaUtil> _diautils, string moduleName, string offset)
+        private string ProcessFrameModuleOffset(Dictionary<string, 
+            DiaUtil> _diautils, 
+            string moduleName, 
+            string offset,
+            bool includeSourceInfo)
         {
             IDiaSymbol mysym;
 
@@ -408,16 +478,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
             mysym.get_undecoratedNameEx(0x1000, out funcname2);
 
-            // try to find if we have source and line number info
-            IDiaEnumLineNumbers enumLineNums;
-            _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 1, out enumLineNums);
-
+            // try to find if we have source and line number info and include it based on the param
             string sourceInfo = string.Empty;
 
-            // only if we found line number information should we append to output 
-            if (enumLineNums.count > 0)
+            if (includeSourceInfo)
             {
-                sourceInfo = string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
+                IDiaEnumLineNumbers enumLineNums;
+                _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 1, out enumLineNums);
+
+                // only if we found line number information should we append to output 
+                if (enumLineNums.count > 0)
+                {
+                    sourceInfo = string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
+                }
             }
 
             // make sure we cleanup COM allocations for the resolved sym
@@ -440,7 +513,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             _loadedModules.Clear();
 
-            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)\t(?<baseaddress>\w+)");
+            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>\w+)");
             var mcmodules = rgxmoduleaddress.Matches(baseAddressesString);
 
             foreach (Match matchedmoduleinfo in mcmodules)
@@ -505,8 +578,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="dllPaths">DLL search paths. this is optional unless the call stack has frames of the form dll!OrdinalNNN+offset</param>
         /// <param name="searchDLLRecursively">Search for DLLs recursively in each path specified. The first path containing a 'matching' DLL will be used.</param>
         /// <param name="framesOnSingleLine">Mostly set this to false except when frames are on the same line and separated by spaces.</param>
+        /// <param name="includeSourceInfo">This is used to control whether source information is included (in the case that private PDBs are available)</param>
         /// <returns></returns>
-        internal string ResolveCallstacks(string inputCallstackText, string symPath, bool searchPDBsRecursively, List<string> dllPaths, bool searchDLLRecursively, bool framesOnSingleLine)
+        internal string ResolveCallstacks(string inputCallstackText, 
+            string symPath, 
+            bool searchPDBsRecursively, 
+            List<string> dllPaths, 
+            bool searchDLLRecursively, 
+            bool framesOnSingleLine, 
+            bool includeSourceInfo)
         {
             var finalCallstack = new StringBuilder();
             var xmldoc = new XmlDocument();
@@ -578,7 +658,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 LocateandLoadPDBs(_diautils, symPath, searchPDBsRecursively, EnumModuleNames(callStackLines));
 
                 // resolve symbols by using DIA
-                currstack.Resolvedstack = ResolveSymbols(_diautils, callStackLines);
+                currstack.Resolvedstack = ResolveSymbols(_diautils, 
+                    callStackLines, 
+                    includeSourceInfo);
 
                 // cleanup any older COM objects
                 if (_diautils != null)
@@ -613,7 +695,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return null;
             }
 
-            var moduleNames = new string[] { "sqldk", "sqlmin", "sqllang", "sqltses", "sqlaccess", "qds", "hkruntime", "hkengine", "hkcompile", "sqlos", "sqlservr" };
+            var moduleNames = new string[] { "ntdll", "kernel32", "kernelbase", "ntoskrnl", "sqldk", "sqlmin", "sqllang", "sqltses", "sqlaccess", "qds", "hkruntime", "hkengine", "hkcompile", "sqlos", "sqlservr" };
 
             var finalCommand = new StringBuilder();
 
@@ -637,22 +719,25 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 if (!string.IsNullOrEmpty(finalFilePath))
                 {
-                    using (var dllFile = new PEFile(finalFilePath))
+                    using (var dllFileStream = new FileStream(finalFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        string pdbName;
-                        Guid pdbGuid;
-                        int pdbAge;
+                        using (var dllFile = new PEFile(dllFileStream, false))
+                        {
+                            string pdbName;
+                            Guid pdbGuid;
+                            int pdbAge;
 
-                        dllFile.GetPdbSignature(out pdbName, out pdbGuid, out pdbAge);
+                            dllFile.GetPdbSignature(out pdbName, out pdbGuid, out pdbAge);
 
-                        pdbName = pdbName.Replace(".pdb", "");
+                            pdbName = pdbName.Replace(".pdb", "");
 
-                        var signaturePlusAge = pdbGuid.ToString("N") + pdbAge.ToString();
-                        var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
+                            var signaturePlusAge = pdbGuid.ToString("N") + pdbAge.ToString();
+                            var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
 
-                        finalCommand.Append("\t");
-                        finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'http://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pd_' -OutFile '<somepath>\{0}.cab' # File version {2}", pdbName, signaturePlusAge, fileVersion);
-                        finalCommand.AppendLine();
+                            finalCommand.Append("\t");
+                            finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'http://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pd_' -OutFile '<somepath>\{0}.cab' # File version {2}", pdbName, signaturePlusAge, fileVersion);
+                            finalCommand.AppendLine();
+                        }
                     }
                 }
             }

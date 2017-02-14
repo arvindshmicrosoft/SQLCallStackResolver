@@ -41,6 +41,14 @@
       <HintPath>packages\Microsoft.Diagnostics.Runtime.0.8.31-beta\lib\net40\Microsoft.Diagnostics.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Microsoft.SqlServer.XE.Core, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Program Files\Microsoft SQL Server\140\Shared\Microsoft.SqlServer.XE.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.XEvent.Linq, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Program Files\Microsoft SQL Server\140\Shared\Microsoft.SqlServer.XEvent.Linq.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="msdia140typelib_clr0200">
       <HintPath>..\..\Program Files (x86)\Microsoft Visual Studio 14.0\Common7\IDE\CommonExtensions\Microsoft\TestWindow\msdia140typelib_clr0200.dll</HintPath>
