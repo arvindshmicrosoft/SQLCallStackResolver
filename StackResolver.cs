@@ -313,7 +313,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             // using the ".dll!0x" to locate the module names
-            var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+(0[xX])*");
+            var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll(!(?<symbolizedfunc>.+))*)*\s*\+(0[xX])*");
             var matchedModuleNames = rgxModuleName.Matches(reconstructedCallstack.ToString());
 
             foreach (Match moduleMatch in matchedModuleNames)
@@ -335,18 +335,70 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="_diautils">The DIA helper instance</param>
         /// <param name="callStackLines">Call stack string</param>
         /// <param name="includeSourceInfo">Whether to include source / line info</param>
+        /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
         /// <returns></returns>
         private string ResolveSymbols(Dictionary<string, 
             DiaUtil> _diautils, 
             string[] callStackLines,
-            bool includeSourceInfo)
+            bool includeSourceInfo,
+            bool relookupSource)
         {
             var finalCallstack = new StringBuilder();
 
             var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
+            var rgxAlreadySymbolizedFrame = new Regex(@"(?<module>\w+)(\.dll)!(?<symbolizedfunc>.+)\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
 
             foreach (var currentFrame in callStackLines)
             {
+                if (relookupSource && includeSourceInfo)
+                {
+                    // This is a rare case. Sometimes we get frames which are already resolved to their symbols but do not include source and line number information
+                    // take for example     sqldk.dll!SpinlockBase::Sleep+0x2d0
+                    // in these cases, we may want to 're-resolve' them to a symbol using DIA so that later
+                    // we can embed source / line number information if that is available now (this is important for some
+                    // Microsoft internal cases where customers send us stacks resolved with public PDBs but internally we
+                    // have private PDBs so we want to now leverage the extra information provided in the private PDBs.)
+                    var matchAlreadySymbolized = rgxAlreadySymbolizedFrame.Match(currentFrame);
+                    if (matchAlreadySymbolized.Success && _diautils.ContainsKey(matchAlreadySymbolized.Groups["module"].Value))
+                    {
+                        var something = currentFrame;
+                        IDiaEnumSymbols matchedSyms;
+
+                        var myDIAsession = _diautils[matchAlreadySymbolized.Groups["module"].Value]._IDiaSession;
+                        myDIAsession.findChildren(myDIAsession.globalScope,
+                            SymTagEnum.SymTagNull,
+                            matchAlreadySymbolized.Groups["symbolizedfunc"].Value,
+                            0,
+                            out matchedSyms);
+
+                        IDiaSymbol a = matchedSyms.Item(0);
+                        var rva = a.relativeVirtualAddress;
+
+                        uint offset = Convert.ToUInt32(matchAlreadySymbolized.Groups["offset"].Value, 16);
+                        rva = rva + offset;
+
+                        IDiaEnumLineNumbers enumLineNums;
+                        myDIAsession.findLinesByRVA(rva, 1, out enumLineNums);
+
+                        string tmpsourceInfo = string.Empty;
+
+                        // only if we found line number information should we append to output 
+                        if (enumLineNums.count > 0)
+                        {
+                            tmpsourceInfo = string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
+                        }
+
+                        finalCallstack.AppendFormat("{0}!{1}\t{2}",
+                            matchAlreadySymbolized.Groups["module"].Value,
+                            matchAlreadySymbolized.Groups["symbolizedfunc"].Value, 
+                            tmpsourceInfo);
+
+                        finalCallstack.AppendLine();
+
+                        continue;
+                    }
+                }
+
                 var match = rgxModuleName.Match(currentFrame);
 
                 if (match.Success)
@@ -579,6 +631,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="searchDLLRecursively">Search for DLLs recursively in each path specified. The first path containing a 'matching' DLL will be used.</param>
         /// <param name="framesOnSingleLine">Mostly set this to false except when frames are on the same line and separated by spaces.</param>
         /// <param name="includeSourceInfo">This is used to control whether source information is included (in the case that private PDBs are available)</param>
+        /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
         /// <returns></returns>
         internal string ResolveCallstacks(string inputCallstackText, 
             string symPath, 
@@ -586,7 +639,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             List<string> dllPaths, 
             bool searchDLLRecursively, 
             bool framesOnSingleLine, 
-            bool includeSourceInfo)
+            bool includeSourceInfo,
+            bool relookupSource)
         {
             var finalCallstack = new StringBuilder();
             var xmldoc = new XmlDocument();
@@ -660,7 +714,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 // resolve symbols by using DIA
                 currstack.Resolvedstack = ResolveSymbols(_diautils, 
                     callStackLines, 
-                    includeSourceInfo);
+                    includeSourceInfo,
+                    relookupSource);
 
                 // cleanup any older COM objects
                 if (_diautils != null)

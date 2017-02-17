@@ -63,7 +63,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 dllPaths,
                 DLLrecurse.Checked,
                 FramesOnSingleLine.Checked,
-                IncludeLineNumbers.Checked
+                IncludeLineNumbers.Checked,
+                RelookupSource.Checked
                 );
         }
 

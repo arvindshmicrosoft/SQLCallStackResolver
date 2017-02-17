@@ -71,13 +71,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.button4 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
             this.IncludeLineNumbers = new System.Windows.Forms.CheckBox();
+            this.RelookupSource = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(1680, 752);
+            this.button1.Location = new System.Drawing.Point(1758, 752);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(254, 83);
+            this.button1.Size = new System.Drawing.Size(176, 83);
             this.button1.TabIndex = 0;
             this.button1.Text = "Resolve callstacks!";
             this.button1.UseVisualStyleBackColor = true;
@@ -96,7 +97,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             this.pdbPaths.Location = new System.Drawing.Point(198, 752);
             this.pdbPaths.Name = "pdbPaths";
-            this.pdbPaths.Size = new System.Drawing.Size(676, 31);
+            this.pdbPaths.Size = new System.Drawing.Size(506, 31);
             this.pdbPaths.TabIndex = 2;
             this.pdbPaths.Text = "C:\\Users\\arvindsh\\Desktop\\sp1_gdr_pdbs";
             // 
@@ -111,7 +112,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.pdbRecurse.AutoSize = true;
             this.pdbRecurse.Checked = true;
             this.pdbRecurse.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.pdbRecurse.Location = new System.Drawing.Point(880, 754);
+            this.pdbRecurse.Location = new System.Drawing.Point(719, 752);
             this.pdbRecurse.Name = "pdbRecurse";
             this.pdbRecurse.Size = new System.Drawing.Size(217, 29);
             this.pdbRecurse.TabIndex = 4;
@@ -145,7 +146,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(1377, 743);
+            this.button2.Location = new System.Drawing.Point(1216, 741);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(128, 93);
             this.button2.TabIndex = 3;
@@ -158,7 +159,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.DLLrecurse.AutoSize = true;
             this.DLLrecurse.Checked = true;
             this.DLLrecurse.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.DLLrecurse.Location = new System.Drawing.Point(880, 802);
+            this.DLLrecurse.Location = new System.Drawing.Point(719, 800);
             this.DLLrecurse.Name = "DLLrecurse";
             this.DLLrecurse.Size = new System.Drawing.Size(217, 29);
             this.DLLrecurse.TabIndex = 10;
@@ -169,7 +170,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             this.binaryPaths.Location = new System.Drawing.Point(198, 803);
             this.binaryPaths.Name = "binaryPaths";
-            this.binaryPaths.Size = new System.Drawing.Size(676, 31);
+            this.binaryPaths.Size = new System.Drawing.Size(506, 31);
             this.binaryPaths.TabIndex = 9;
             // 
             // label2
@@ -184,7 +185,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // FramesOnSingleLine
             // 
             this.FramesOnSingleLine.AutoSize = true;
-            this.FramesOnSingleLine.Location = new System.Drawing.Point(1511, 743);
+            this.FramesOnSingleLine.Location = new System.Drawing.Point(1350, 741);
             this.FramesOnSingleLine.Name = "FramesOnSingleLine";
             this.FramesOnSingleLine.Size = new System.Drawing.Size(153, 54);
             this.FramesOnSingleLine.TabIndex = 11;
@@ -193,7 +194,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(1235, 743);
+            this.button4.Location = new System.Drawing.Point(1074, 741);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(136, 93);
             this.button4.TabIndex = 13;
@@ -203,7 +204,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(1121, 743);
+            this.button3.Location = new System.Drawing.Point(960, 741);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(108, 93);
             this.button3.TabIndex = 14;
@@ -216,12 +217,22 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.IncludeLineNumbers.AutoSize = true;
             this.IncludeLineNumbers.Checked = true;
             this.IncludeLineNumbers.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.IncludeLineNumbers.Location = new System.Drawing.Point(1511, 802);
+            this.IncludeLineNumbers.Location = new System.Drawing.Point(1350, 800);
             this.IncludeLineNumbers.Name = "IncludeLineNumbers";
             this.IncludeLineNumbers.Size = new System.Drawing.Size(152, 29);
             this.IncludeLineNumbers.TabIndex = 15;
             this.IncludeLineNumbers.Text = "LineNums?";
             this.IncludeLineNumbers.UseVisualStyleBackColor = true;
+            // 
+            // RelookupSource
+            // 
+            this.RelookupSource.AutoSize = true;
+            this.RelookupSource.Location = new System.Drawing.Point(1509, 751);
+            this.RelookupSource.Name = "RelookupSource";
+            this.RelookupSource.Size = new System.Drawing.Size(221, 29);
+            this.RelookupSource.TabIndex = 16;
+            this.RelookupSource.Text = "Relookup Source?";
+            this.RelookupSource.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -229,6 +240,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(1946, 847);
+            this.Controls.Add(this.RelookupSource);
             this.Controls.Add(this.IncludeLineNumbers);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button4);
@@ -269,6 +281,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.CheckBox IncludeLineNumbers;
+        private System.Windows.Forms.CheckBox RelookupSource;
     }
 }
 
