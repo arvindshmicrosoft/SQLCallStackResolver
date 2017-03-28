@@ -346,10 +346,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var finalCallstack = new StringBuilder();
 
             var rgxModuleName = new Regex(@"(?<module>\w+)(\.dll)*\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
-            var rgxAlreadySymbolizedFrame = new Regex(@"(?<module>\w+)(\.dll)!(?<symbolizedfunc>.+)\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
+            var rgxAlreadySymbolizedFrame = new Regex(@"(?<module>\w+)(\.dll)!(?<symbolizedfunc>.+?)\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
 
-            foreach (var currentFrame in callStackLines)
+            foreach (var iterFrame in callStackLines)
             {
+                // hard-coded find-replace for XML markup - useful when importing from XML histograms
+                var currentFrame = iterFrame.Replace("&lt;", "<").Replace("&gt;", ">");
+
                 if (relookupSource && includeSourceInfo)
                 {
                     // This is a rare case. Sometimes we get frames which are already resolved to their symbols but do not include source and line number information
@@ -371,27 +374,40 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             0,
                             out matchedSyms);
 
-                        IDiaSymbol a = matchedSyms.Item(0);
-                        var rva = a.relativeVirtualAddress;
-
-                        uint offset = Convert.ToUInt32(matchAlreadySymbolized.Groups["offset"].Value, 16);
-                        rva = rva + offset;
-
-                        IDiaEnumLineNumbers enumLineNums;
-                        myDIAsession.findLinesByRVA(rva, 1, out enumLineNums);
-
-                        string tmpsourceInfo = string.Empty;
-
-                        // only if we found line number information should we append to output 
-                        if (enumLineNums.count > 0)
+                        if (matchedSyms.count > 0)
                         {
-                            tmpsourceInfo = string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
-                        }
+                            IDiaSymbol a = matchedSyms.Item(0);
 
-                        finalCallstack.AppendFormat("{0}!{1}\t{2}",
-                            matchAlreadySymbolized.Groups["module"].Value,
-                            matchAlreadySymbolized.Groups["symbolizedfunc"].Value, 
-                            tmpsourceInfo);
+                            // for this 're-lookup source' case, it is appropriate to use the seg / address / offset
+                            // than use RVA. Using RVA seems to produce totally incorrect results in many cases
+                            var rva = a.addressOffset;
+                            var seg = a.addressSection;
+
+                            uint offset = Convert.ToUInt32(matchAlreadySymbolized.Groups["offset"].Value, 16);
+                            rva = rva + offset;
+
+                            IDiaEnumLineNumbers enumLineNums;
+
+                            myDIAsession.findLinesByAddr(seg, rva, 1, out enumLineNums);
+
+                            string tmpsourceInfo = string.Empty;
+
+                            // only if we found line number information should we append to output 
+                            if (enumLineNums.count > 0)
+                            {
+                                tmpsourceInfo = string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
+                            }
+
+                            finalCallstack.AppendFormat("{0}!{1}\t{2}",
+                                matchAlreadySymbolized.Groups["module"].Value,
+                                matchAlreadySymbolized.Groups["symbolizedfunc"].Value,
+                                tmpsourceInfo);
+                        }
+                        else
+                        {
+                            // in the rare case that the symbol does not exist, return frame as-is
+                            finalCallstack.Append(currentFrame);
+                        }
 
                         finalCallstack.AppendLine();
 
@@ -523,7 +539,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return null;
             }
 
-            var funcname = mysym.undecoratedName;
             string funcname2;
 
             // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
@@ -763,7 +778,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 foreach (var currPath in splitRootPaths)
                 {
-                    var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                    var foundFiles = from f in Directory.EnumerateFiles(currPath, currentModule + ".*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
+                                     where !f.EndsWith(".pdb", StringComparison.InvariantCultureIgnoreCase)
+                                     select f;
 
                     if (foundFiles.Count() > 0)
                     {
@@ -784,7 +801,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                             dllFile.GetPdbSignature(out pdbName, out pdbGuid, out pdbAge);
 
-                            pdbName = pdbName.Replace(".pdb", "");
+                            pdbName = System.IO.Path.GetFileNameWithoutExtension(pdbName);
 
                             var signaturePlusAge = pdbGuid.ToString("N") + pdbAge.ToString();
                             var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
