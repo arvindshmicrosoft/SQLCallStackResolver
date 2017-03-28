@@ -1,7 +1,7 @@
-#Installation
+# Installation
 Please refer to the Releases section for a ready-to-run package and pre-requisites.
 
-#Usage
+# Usage
 The tool comes with some pre-populated examples in the textboxes, just follow that example with your real-world stack(s).
 
 The textbox on the left accepts the following types of input:
@@ -14,7 +14,7 @@ The textbox on the left accepts the following types of input:
 
 In all cases you must provided a symbol search path [3][4]
 
-#Building
+# Building
 We welcome contributions - if you are interested to help, please fork the project, and submit your contributions via pull requests. Do note:
 
 * You will need VS2015 installed to build this solution
