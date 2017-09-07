@@ -1,5 +1,8 @@
-$sourcefolder = "<somesourcefolder>"
-$destfolder = "<somedestfolder>"
+param
+(
+[string] $sourcefolder,
+[string] $destfolder
+)
 
 copy ($sourcefolder + "\dll\hkcompile.pdb") $destfolder
 copy ($sourcefolder + "\dll\hkengine.pdb") $destfolder

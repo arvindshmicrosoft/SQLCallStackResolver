@@ -539,12 +539,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return null;
             }
 
-            string funcname2;
-
-            // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
-            // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
-            mysym.get_undecoratedNameEx(0x1000, out funcname2);
-
+            // we are now just using the name property instead of calling the undecorated name function
+            string funcname2 = mysym.name;
+            
             // try to find if we have source and line number info and include it based on the param
             string sourceInfo = string.Empty;
 
