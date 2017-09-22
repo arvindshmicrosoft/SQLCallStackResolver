@@ -498,6 +498,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool includeSourceInfo)
         {
             IDiaSymbol mysym;
+            bool useUndecorateLogic = false;
 
             // the offsets in the XE output are in hex, so we convert to base-10 accordingly
             var rva = Convert.ToUInt32(offset, 16);
@@ -526,6 +527,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 if (mysym == null)
                 {
+                    useUndecorateLogic = true;
+
                     // based on previous remarks, look for public symbol near the offset / RVA
                     _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
                         SymTagEnum.SymTagPublicSymbol,
@@ -540,8 +543,25 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             // we are now just using the name property instead of calling the undecorated name function
-            string funcname2 = mysym.name;
-            
+            string funcname2;
+
+            if (!useUndecorateLogic)
+            {
+                funcname2 = mysym.name;
+            }
+            else
+            {
+                // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
+                // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
+                mysym.get_undecoratedNameEx(0x1000, out funcname2);
+
+                // catch-all / fallback
+                if (string.IsNullOrEmpty(funcname2))
+                {
+                    funcname2 = mysym.name;
+                }
+            }
+
             // try to find if we have source and line number info and include it based on the param
             string sourceInfo = string.Empty;
 
