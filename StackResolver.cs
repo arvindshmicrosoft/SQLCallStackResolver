@@ -824,18 +824,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
 
                             finalCommand.Append("\t");
-                            finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'http://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pd_' -OutFile '<somepath>\{0}.cab' # File version {2}", pdbName, signaturePlusAge, fileVersion);
+                            finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'http://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb' -OutFile '<somepath>\{0}.pdb' # File version {2}", pdbName, signaturePlusAge, fileVersion);
                             finalCommand.AppendLine();
                         }
                     }
                 }
             }
-
-            finalCommand.Append("\t");
-            finalCommand.AppendLine(@"New-Item -Type Directory -Path <somepath>\extracted -ErrorAction SilentlyContinue");
-
-            finalCommand.Append("\t");
-            finalCommand.AppendLine(@"expand.exe -r <somepath>\*.cab <somepath>\extracted");
 
             return finalCommand.ToString();
         }
