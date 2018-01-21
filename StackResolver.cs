@@ -704,17 +704,52 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 // since the input was XML containing multiple stacks, construct the list of stacks to process
                 int stacknum = 0;
                 var allstacknodes = xmldoc.SelectNodes("/HistogramTarget/Slot");
-                foreach (XmlNode currstack in allstacknodes)
-                {
-                    var slotcount = int.Parse(currstack.Attributes["count"].Value);
-                    var candidatestack = string.Format("Slot_{0}\t[count:{1}]:\r\n\r\n{2}", stacknum, slotcount, currstack.SelectSingleNode("./value[1]").InnerText);
-                    listOfCallStacks.Add(new StackWithCount()
-                    {
-                        Callstack = candidatestack,
-                        Count = slotcount
-                    });
 
-                    stacknum++;
+                // handle the case wherein we are dealing with a ring buffer output with individual events
+                // and not a histogram
+                if (0 == allstacknodes.Count)
+                {
+                    allstacknodes = xmldoc.SelectNodes("//event[count(./action[@name = 'callstack']) > 0]");
+
+                    if (allstacknodes.Count > 0)
+                    {
+                        // process individual callstacks
+                        foreach (XmlNode currstack in allstacknodes)
+                        {
+                            var callstackTextNode = currstack.SelectSingleNode("./action[@name = 'callstack'][1]/value[1]");
+                            var callstackText = callstackTextNode.InnerText;
+
+                            // proceed to extract the surrounding XML markup
+                            callstackTextNode.ParentNode.RemoveChild(callstackTextNode);
+
+                            var eventXMLMarkup = currstack.OuterXml.Replace("\r", string.Empty).Replace("\n", string.Empty);
+
+                            var candidatestack = string.Format("Event details: {0}:\r\n\r\n{1}", eventXMLMarkup, callstackText);
+                            listOfCallStacks.Add(new StackWithCount()
+                            {
+                                Callstack = candidatestack,
+                                Count = 1
+                            });
+
+                            stacknum++;
+                        }
+                    }
+                }
+                else
+                {
+                    // process histograms
+                    foreach (XmlNode currstack in allstacknodes)
+                    {
+                        var slotcount = int.Parse(currstack.Attributes["count"].Value);
+                        var candidatestack = string.Format("Slot_{0}\t[count:{1}]:\r\n\r\n{2}", stacknum, slotcount, currstack.SelectSingleNode("./value[1]").InnerText);
+                        listOfCallStacks.Add(new StackWithCount()
+                        {
+                            Callstack = candidatestack,
+                            Count = slotcount
+                        });
+
+                        stacknum++;
+                    }
                 }
             }
 

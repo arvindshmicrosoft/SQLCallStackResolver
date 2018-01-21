@@ -121,6 +121,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // callStackInput
             // 
+            this.callStackInput.AllowDrop = true;
             this.callStackInput.Location = new System.Drawing.Point(0, 2);
             this.callStackInput.MaxLength = 999999999;
             this.callStackInput.Multiline = true;
@@ -130,6 +131,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.callStackInput.TabIndex = 5;
             this.callStackInput.Text = resources.GetString("callStackInput.Text");
             this.callStackInput.WordWrap = false;
+            this.callStackInput.DragDrop += new System.Windows.Forms.DragEventHandler(this.callStackInput_DragDrop);
+            this.callStackInput.DragEnter += new System.Windows.Forms.DragEventHandler(this.callStackInput_DragEnter);
+            this.callStackInput.DragOver += new System.Windows.Forms.DragEventHandler(this.callStackInput_DragOver);
             this.callStackInput.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox2_KeyDown);
             // 
             // finalOutput

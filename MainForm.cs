@@ -36,6 +36,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System.Collections.Generic;
     using System.Linq;
     using System.Windows.Forms;
+    using System.Text;
+    using System.IO;
 
     public partial class MainForm : Form
     {
@@ -121,6 +123,39 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                        0);
 
             callStackInput.Text = this._resolver.GetXMLEquivalent(xelFileName);
+        }
+
+        private void callStackInput_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop, false) == true)
+            {
+                e.Effect = DragDropEffects.All;
+
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length != 0)
+                {
+                    var allFilesContent = new StringBuilder();
+                    foreach (var currFile in files)
+                    {
+                        allFilesContent.AppendLine(File.ReadAllText(currFile));
+                    }
+
+                    callStackInput.Text = allFilesContent.ToString();
+                }
+            }
+        }
+
+        private void callStackInput_DragEnter(object sender, DragEventArgs e)
+        {
+                        
+        }
+
+        private void callStackInput_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
+            else
+                e.Effect = DragDropEffects.None;
         }
     }
 }
