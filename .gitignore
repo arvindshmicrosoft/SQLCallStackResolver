@@ -242,5 +242,7 @@ ModelManifest.xml
 .fake/
 /Samples/ctp1.2.testing.txt
 /Samples
-/docs/SQLSat696/Demos
-/docs/SQLSat696
+/docs/SQLSat696/Demos/AV/SQLDump0011.mdmp
+/docs/SQLSat696/Demos/LOCK_HASH/XPerfData
+/docs/SQLSat696/Demos/LOCK_HASH/XESpins_0_131627061603030000.xel
+/docs/SQLSat696/Symbols

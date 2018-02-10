@@ -1,0 +1,23 @@
+sqllang!CIndexDef::CreateIndex
+sqllang!E_CNSTINDEX::Execute
+sqllang!E_CNSTCRT::Execute
+sqllang!CTableCreate::CreateRelation
+sqllang!CTableCreate::LCreateImpl
+sqllang!CStmtCreateTable::XretCreateTableExecute
+sqllang!CXStmtCreateTableDDL::XretExecute
+sqllang!CMsqlExecContext::ExecuteStmts<1,1>
+sqllang!CMsqlExecContext::FExecute
+sqllang!CSQLSource::Execute
+sqllang!process_request
+sqllang!process_commands_internal
+sqllang!process_messages
+sqldk!SOS_Task::Param::Execute
+sqldk!SOS_Scheduler::RunTask
+sqldk!SOS_Scheduler::ProcessTasks
+sqldk!SchedulerManager::WorkerEntryPoint
+sqldk!SystemThread::RunWorker
+sqldk!SystemThreadDispatcher::ProcessWorker
+sqldk!SchedulerManager::ThreadEntryPoint
+00007FFC22DB1FE4 Module(KERNEL32+0000000000011FE4)
+00007FFC255DEFB1 Module(ntdll+000000000006EFB1)
+
