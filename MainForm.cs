@@ -57,7 +57,18 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 dllPaths = binaryPaths.Text.Split(';').ToList();
             }
 
-            this._resolver.ProcessBaseAddresses(this._baseAddressesString);
+            var res = this._resolver.ProcessBaseAddresses(this._baseAddressesString);
+            if (!res)
+            {
+                MessageBox.Show(
+                            this,
+                            "Cannot interpret the module base address information. Make sure you just have the output of the following query (no column headers, no other columns) copied from SSMS using the Grid Results\r\n\r\nselect name, base_address from sys.dm_os_loaded_modules where name not like '%.rll'",
+                            "Unable to load base address information",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+
+                return;
+            }
 
             finalOutput.Text = this._resolver.ResolveCallstacks(callStackInput.Text,
                 pdbPaths.Text,

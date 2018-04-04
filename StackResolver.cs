@@ -588,11 +588,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// and constructs an internal map of each modules start and end virtual address
         /// </summary>
         /// <param name="baseAddressesString"></param>
-        internal void ProcessBaseAddresses(string baseAddressesString)
+        internal bool ProcessBaseAddresses(string baseAddressesString)
         {
+            bool retVal = true;
+
             if (string.IsNullOrEmpty(baseAddressesString))
             {
-                return;
+                return false;
             }
 
             _loadedModules.Clear();
@@ -600,16 +602,29 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>\w+)");
             var mcmodules = rgxmoduleaddress.Matches(baseAddressesString);
 
-            foreach (Match matchedmoduleinfo in mcmodules)
+            try
             {
-                var newModule = new ModuleInfo()
+                foreach (Match matchedmoduleinfo in mcmodules)
                 {
-                    ModuleName = Path.GetFileNameWithoutExtension(matchedmoduleinfo.Groups["filepath"].Value),
-                    BaseAddress = Convert.ToUInt64(matchedmoduleinfo.Groups["baseaddress"].Value, 16),
-                    EndAddress = ulong.MaxValue // stub this with an 'infinite' end address; only the highest loaded module will end up with this value finally
-                };
+                    var newModule = new ModuleInfo()
+                    {
+                        ModuleName = Path.GetFileNameWithoutExtension(matchedmoduleinfo.Groups["filepath"].Value),
+                        BaseAddress = Convert.ToUInt64(matchedmoduleinfo.Groups["baseaddress"].Value, 16),
+                        EndAddress = ulong.MaxValue // stub this with an 'infinite' end address; only the highest loaded module will end up with this value finally
+                    };
 
-                _loadedModules.Add(newModule);
+                    _loadedModules.Add(newModule);
+                }
+            }
+            catch(FormatException)
+            {
+                // typically errors with non-numeric info passed to  Convert.ToUInt64
+                retVal = false;
+            }
+            catch (ArgumentException)
+            {
+                // typically these are malformed paths passed to Path.GetFileNameWithoutExtension
+                retVal = false;
             }
 
             // sort them by base address
@@ -621,6 +636,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 // the previous modules end address will be current module's end address - 1 byte
                 _loadedModules[moduleIndex - 1].EndAddress = _loadedModules[moduleIndex].BaseAddress - 1;
             }
+
+            return retVal;
         }
 
         /// <summary>
@@ -642,11 +659,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     foreach (var currPath in splitRootPaths)
                     {
-                        var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                        if (foundFiles.Count() > 0)
+                        if (Directory.Exists(currPath))
                         {
-                            _diautils.Add(currentModule, new DiaUtil(foundFiles.First()));
-                            break;
+                            var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                            if (foundFiles.Count() > 0)
+                            {
+                                _diautils.Add(currentModule, new DiaUtil(foundFiles.First()));
+                                break;
+                            }
                         }
                     }
                 }
