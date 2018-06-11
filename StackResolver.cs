@@ -594,7 +594,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (string.IsNullOrEmpty(baseAddressesString))
             {
-                return false;
+                // changed this to return true because this is not a true error condition
+                return true;
             }
 
             _loadedModules.Clear();
