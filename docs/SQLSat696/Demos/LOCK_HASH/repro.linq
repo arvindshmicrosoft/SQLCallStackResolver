@@ -2,9 +2,14 @@
   <Namespace>System.Threading.Tasks</Namespace>
 </Query>
 
-Parallel.For(0, 20, i =>
+int numThreads = 500;
+ThreadPool.SetMinThreads(Environment.ProcessorCount * 25, Environment.ProcessorCount * 8);
+
+Parallel.For(0, numThreads, i =>
 {
- using (var con = new SqlConnection("Data Source=.\\sql2017;Initial Catalog=lockhashrepro;Integrated Security=false;user id=nonadmin;password=somepassword"))
+try
+{
+ using (var con = new SqlConnection("Data Source=.\\sql2017;Initial Catalog=lockhashrepro;Integrated Security=false;user id=nonadmin;password=somepassword;Max Pool Size=5000;Connection Timeout=300;Encrypt=false;TransparentNetworkIPResolution=false;"))
  {
   con.Open();
   var cmd = new SqlCommand();
@@ -19,7 +24,13 @@ Parallel.For(0, 20, i =>
 	cnt++;
 	}
  } 
-});
+ }
+ catch(Exception)
+ {
+ 	//Console.WriteLine($"Error with {endpoint}");
+ }
+}
+);
 
 /*
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
