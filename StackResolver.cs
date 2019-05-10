@@ -222,8 +222,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 using (var _accessor = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
                 {
-                    IMAGE_EXPORT_DIRECTORY exportDirectory;
-                    _accessor.Read(offset, out exportDirectory);
+                    _accessor.Read(offset, out IMAGE_EXPORT_DIRECTORY exportDirectory);
 
                     var count = exportDirectory.NumberOfFunctions;
                     exports = new Dictionary<int, ExportedSymbol>(count);
@@ -274,10 +273,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 if (matchVA.Success)
                 {
                     ulong virtAddress = Convert.ToUInt64(matchVA.Groups["vaddress"].Value, 16);
-                    string moduleName;
-                    uint offset;
 
-                    if (TryObtainModuleOffset(virtAddress, out moduleName, out offset))
+                    if (TryObtainModuleOffset(virtAddress, out string moduleName, out uint offset))
                     {
                         // finalCallstack.AppendLine(ProcessFrameModuleOffset(moduleName, offset.ToString()));
                         retval[frameNum] = string.Format("{0}+0x{1:X}", moduleName, offset);
@@ -365,14 +362,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     if (matchAlreadySymbolized.Success && _diautils.ContainsKey(matchAlreadySymbolized.Groups["module"].Value))
                     {
                         var something = currentFrame;
-                        IDiaEnumSymbols matchedSyms;
 
                         var myDIAsession = _diautils[matchAlreadySymbolized.Groups["module"].Value]._IDiaSession;
                         myDIAsession.findChildren(myDIAsession.globalScope,
                             SymTagEnum.SymTagNull,
                             matchAlreadySymbolized.Groups["symbolizedfunc"].Value,
                             0,
-                            out matchedSyms);
+                            out IDiaEnumSymbols matchedSyms);
 
                         if (matchedSyms.count > 0)
                         {
@@ -386,9 +382,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             uint offset = Convert.ToUInt32(matchAlreadySymbolized.Groups["offset"].Value, 16);
                             rva = rva + offset;
 
-                            IDiaEnumLineNumbers enumLineNums;
-
-                            myDIAsession.findLinesByAddr(seg, rva, 1, out enumLineNums);
+                            myDIAsession.findLinesByAddr(seg, rva, 1, out IDiaEnumLineNumbers enumLineNums);
 
                             string tmpsourceInfo = string.Empty;
 
@@ -497,7 +491,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             string offset,
             bool includeSourceInfo)
         {
-            IDiaSymbol mysym;
             bool useUndecorateLogic = false;
 
             // the offsets in the XE output are in hex, so we convert to base-10 accordingly
@@ -509,7 +502,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // (not very important for XE callstacks but important if you have an assert or non-yielding stack in SQLDUMPnnnn.txt files...)
             _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
                 SymTagEnum.SymTagBlock,
-                out mysym);
+                out IDiaSymbol mysym);
 
             if (mysym != null)
             {
@@ -567,8 +560,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (includeSourceInfo)
             {
-                IDiaEnumLineNumbers enumLineNums;
-                _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 1, out enumLineNums);
+                _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 1, out IDiaEnumLineNumbers enumLineNums);
 
                 // only if we found line number information should we append to output 
                 if (enumLineNums.count > 0)
@@ -868,11 +860,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     {
                         using (var dllFile = new PEFile(dllFileStream, false))
                         {
-                            string pdbName;
-                            Guid pdbGuid;
-                            int pdbAge;
-
-                            dllFile.GetPdbSignature(out pdbName, out pdbGuid, out pdbAge);
+                            dllFile.GetPdbSignature(out string pdbName, out Guid pdbGuid, out int pdbAge);
 
                             pdbName = System.IO.Path.GetFileNameWithoutExtension(pdbName);
 
@@ -880,7 +868,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
 
                             finalCommand.Append("\t");
-                            finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'http://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb' -OutFile '<somepath>\{0}.pdb' # File version {2}", pdbName, signaturePlusAge, fileVersion);
+                            finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb' -OutFile '<somepath>\{0}.pdb' # File version {2}", pdbName, signaturePlusAge, fileVersion);
                             finalCommand.AppendLine();
                         }
                     }
@@ -921,6 +909,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         }
 
         public void Dispose()
+        {
+            this.Dispose(true);
+        }
+        public void Dispose(bool disposeAll)
         {
             Marshal.ReleaseComObject(_IDiaSession);
             Marshal.ReleaseComObject(_IDiaDataSource);

@@ -10,7 +10,7 @@ go
 ALTER DATABASE lockhashrepro ADD FILEGROUP imoltp CONTAINS MEMORY_OPTIMIZED_DATA  
 go
 
-ALTER DATABASE lockhashrepro ADD FILE (name='imoltp_mod1', filename='c:\sqldb\lockhash_imoltp_sql2017') TO FILEGROUP imoltp
+ALTER DATABASE lockhashrepro ADD FILE (name='imoltp_mod1', filename='c:\sqldb\lockhash_imoltp_sql2019ctp23') TO FILEGROUP imoltp
 go  
 
 create table memopt(
@@ -48,6 +48,9 @@ alter role db_datawriter add member [nonadmin]
 GO
 
 grant execute on interop to nonadmin
+go
+
+grant execute on native to nonadmin
 go
 
 /*

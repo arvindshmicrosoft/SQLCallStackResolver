@@ -1,20 +1,35 @@
-CREATE LOGIN [nonadmin] WITH PASSWORD=N'somepassword', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+SELECT @@SERVERNAME, @@VERSION
 GO
 
-create database pfscontention
-go
+SELECT * 
+FROM sys.dm_os_spinlock_stats
+ORDER BY backoffs desc
+GO
 
-use pfscontention
-go
+SELECT *
+FROM sys.dm_os_wait_stats
+ORDER BY signal_wait_time_ms DESC
+GO
 
-ALTER DATABASE pfscontention ADD FILEGROUP imoltp CONTAINS MEMORY_OPTIMIZED_DATA  
-go
+dbcc sqlperf(spinlockstats, 'clear')
+GO
 
-ALTER DATABASE pfscontention ADD FILE (name='imoltp_mod1', filename='f:\data\imoltp_pfs_contention_sql2016') TO FILEGROUP imoltp
-go  
+dbcc sqlperf(waitstats, 'clear')
+GO
 
-create user nonadmin
-go
+SELECT *
+FROM sys.dm_os_nodes
+GO
+
+exec xp_readerrorlog
+GO
+
+SELECT * 
+FROM sys.dm_tcp_listener_states
+GO
+
+dbcc tracestatus(-1)
+GO
 
 /*
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 

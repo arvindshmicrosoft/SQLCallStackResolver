@@ -1,20 +1,8 @@
-CREATE LOGIN [nonadmin] WITH PASSWORD=N'somepassword', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
-GO
-
-create database pfscontention
-go
-
-use pfscontention
-go
-
-ALTER DATABASE pfscontention ADD FILEGROUP imoltp CONTAINS MEMORY_OPTIMIZED_DATA  
-go
-
-ALTER DATABASE pfscontention ADD FILE (name='imoltp_mod1', filename='f:\data\imoltp_pfs_contention_sql2016') TO FILEGROUP imoltp
-go  
-
-create user nonadmin
-go
+while 1= 1 
+begin
+waitfor delay '00:00:30'
+exec [dbo].[DeleteExpiredCacheItems]
+END
 
 /*
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
