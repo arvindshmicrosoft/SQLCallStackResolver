@@ -42,7 +42,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             InitializeComponent();
             if (!string.IsNullOrEmpty(initialtext))
             {
-                this.textBox1.Text = initialtext;
+                this.InputAddresses.Text = initialtext;
             }
         }
 
@@ -50,7 +50,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             get
             {
-                return this.textBox1.Text;
+                return this.InputAddresses.Text;
             }
         }
 
@@ -58,7 +58,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             if (e.Control && e.KeyCode == Keys.A)
             {
-                textBox1.SelectAll();
+                InputAddresses.SelectAll();
             }
         }
     }

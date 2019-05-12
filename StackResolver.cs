@@ -338,7 +338,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             DiaUtil> _diautils, 
             string[] callStackLines,
             bool includeSourceInfo,
-            bool relookupSource)
+            bool relookupSource,
+            bool includeOffsets)
         {
             var finalCallstack = new StringBuilder();
 
@@ -419,7 +420,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         string processedFrame = ProcessFrameModuleOffset(_diautils, 
                             matchedModuleName, 
                             match.Groups["offset"].Value,
-                            includeSourceInfo
+                            includeSourceInfo,
+                            includeOffsets
                             );
 
                         if (!string.IsNullOrEmpty(processedFrame))
@@ -484,12 +486,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="moduleName">Module name</param>
         /// <param name="offset">RVA offset within the module</param>
         /// <param name="includeSourceInfo">Whether to include source / line info</param>
+        /// <param name="includeOffset">Whether to include func offset in output</param>
         /// <returns></returns>
         private string ProcessFrameModuleOffset(Dictionary<string, 
             DiaUtil> _diautils, 
             string moduleName, 
             string offset,
-            bool includeSourceInfo)
+            bool includeSourceInfo,
+            bool includeOffset)
         {
             bool useUndecorateLogic = false;
 
@@ -500,32 +504,46 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // initially we look for 'block' symbols, which have a parent function
             // typically this is seen in kernelbase.dll 
             // (not very important for XE callstacks but important if you have an assert or non-yielding stack in SQLDUMPnnnn.txt files...)
-            _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
+            _diautils[moduleName]._IDiaSession.findSymbolByRVAEx(rva,
                 SymTagEnum.SymTagBlock,
-                out IDiaSymbol mysym);
+                out IDiaSymbol mysym,
+                out int displacement);
 
             if (mysym != null)
             {
-                // if we did find a block symbol then we look for its parent
-                mysym = mysym.lexicalParent;
+                uint blockAddress = mysym.addressOffset;
+
+                // if we did find a block symbol then we look for its parent till we find either a function or public symbol
+                // an addition check is on the name of the symbol being non-null and non-empty
+                while (!(mysym.symTag == (uint) SymTag.Function || mysym.symTag == (uint)SymTag.PublicSymbol) && string.IsNullOrEmpty(mysym.name))
+                {
+                    mysym = mysym.lexicalParent;
+                }
+
+                // Calculate offset into the function by assuming that the final lexical parent we found in the loop above
+                // is the actual start of the function. Then the difference between (the original block start function start + displacement) 
+                // and final lexical parent's start addresses is the final "displacement" / offset to be displayed
+                displacement = (int) (blockAddress - mysym.addressOffset + displacement);
             }
             else
             {
                 // we did not find a block symbol, so let's see if we get a Function symbol itself
                 // generally this is going to return mysym as null for most users (because public PDBs do not tag the functions as Function
                 // they instead are tagged as PublicSymbol)
-                _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
+                _diautils[moduleName]._IDiaSession.findSymbolByRVAEx(rva,
                     SymTagEnum.SymTagFunction,
-                    out mysym);
+                    out mysym,
+                    out displacement);
 
                 if (mysym == null)
                 {
                     useUndecorateLogic = true;
 
                     // based on previous remarks, look for public symbol near the offset / RVA
-                    _diautils[moduleName]._IDiaSession.findSymbolByRVA(rva,
+                    _diautils[moduleName]._IDiaSession.findSymbolByRVAEx(rva,
                         SymTagEnum.SymTagPublicSymbol,
-                        out mysym);
+                        out mysym,
+                        out displacement);
                 }
             }
 
@@ -555,6 +573,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 }
             }
 
+            string offsetStr = string.Empty;
+
+            if (includeOffset)
+            {
+                offsetStr = string.Format("+{0}", displacement);
+            }
+
             // try to find if we have source and line number info and include it based on the param
             string sourceInfo = string.Empty;
 
@@ -572,7 +597,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // make sure we cleanup COM allocations for the resolved sym
             Marshal.ReleaseComObject(mysym);
 
-            return string.Format("{0}!{1}\t{2}", moduleName, funcname2, sourceInfo).Trim();
+            return string.Format("{0}!{1}{2}\t{3}", moduleName, funcname2, offsetStr, sourceInfo).Trim();
         }
 
         /// <summary>
@@ -677,6 +702,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="framesOnSingleLine">Mostly set this to false except when frames are on the same line and separated by spaces.</param>
         /// <param name="includeSourceInfo">This is used to control whether source information is included (in the case that private PDBs are available)</param>
         /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
+        /// <param name="includeOffsets">Whether to output func offsets or not as part of output</param>
         /// <returns></returns>
         internal string ResolveCallstacks(string inputCallstackText, 
             string symPath, 
@@ -685,7 +711,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool searchDLLRecursively, 
             bool framesOnSingleLine, 
             bool includeSourceInfo,
-            bool relookupSource)
+            bool relookupSource,
+            bool includeOffsets)
         {
             var finalCallstack = new StringBuilder();
             var xmldoc = new XmlDocument();
@@ -795,7 +822,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 currstack.Resolvedstack = ResolveSymbols(_diautils, 
                     callStackLines, 
                     includeSourceInfo,
-                    relookupSource);
+                    relookupSource,
+                    includeOffsets);
 
                 // cleanup any older COM objects
                 if (_diautils != null)

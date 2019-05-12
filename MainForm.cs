@@ -49,7 +49,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private StackResolver _resolver = new StackResolver();
         private string _baseAddressesString = null;
 
-        private void button1_Click(object sender, EventArgs e)
+        private void ResolveCallstacks_Click(object sender, EventArgs e)
         {
             List<string> dllPaths = null;
             if (!string.IsNullOrEmpty(binaryPaths.Text))
@@ -77,11 +77,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 DLLrecurse.Checked,
                 FramesOnSingleLine.Checked,
                 IncludeLineNumbers.Checked,
-                RelookupSource.Checked
+                RelookupSource.Checked,
+                includeOffsets.Checked
                 );
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void EnterBaseAddresses_Click(object sender, EventArgs e)
         {
             var baseAddressForm = new MultilineInput(this._baseAddressesString);
             DialogResult res = baseAddressForm.ShowDialog(this);
@@ -96,7 +97,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
         }
 
-        private void textBox2_KeyDown(object sender, KeyEventArgs e)
+        private void CallStackInput_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.A)
             {
@@ -104,7 +105,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
         }
 
-        private void textBox3_KeyDown(object sender, KeyEventArgs e)
+        private void FinalOutput_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.A)
             {
@@ -112,7 +113,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        private void GetPDBDnldScript_Click(object sender, EventArgs e)
         {
             var finalCmds = this._resolver.ObtainPDBDownloadCommandsfromDLL(binaryPaths.Text, DLLrecurse.Checked);
 
@@ -125,7 +126,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             outputCmds.ShowDialog(this);
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void LoadXELButton_Click(object sender, EventArgs e)
         {
             var xelFileName = Microsoft.VisualBasic.Interaction.InputBox("Enter full path to XEL file (including extension)",
                        "XEL file name",
@@ -136,7 +137,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             callStackInput.Text = this._resolver.GetXMLEquivalent(xelFileName);
         }
 
-        private void callStackInput_DragDrop(object sender, DragEventArgs e)
+        private void CallStackInput_DragDrop(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop, false) == true)
             {
@@ -156,12 +157,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
         }
 
-        private void callStackInput_DragEnter(object sender, DragEventArgs e)
-        {
-                        
-        }
-
-        private void callStackInput_DragOver(object sender, DragEventArgs e)
+        private void CallStackInput_DragOver(object sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Copy;
