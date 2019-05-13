@@ -33,6 +33,8 @@
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
+    using System.IO;
+    using System.Text;
     using System.Windows.Forms;
 
     public partial class MultilineInput : Form
@@ -54,12 +56,40 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
         }
 
-        private void textBox1_KeyDown(object sender, KeyEventArgs e)
+        private void InputAddresses_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.A)
             {
                 InputAddresses.SelectAll();
             }
+        }
+
+        private void InputAddresses_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop, false) == true)
+            {
+                e.Effect = DragDropEffects.All;
+
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length != 0)
+                {
+                    var allFilesContent = new StringBuilder();
+                    foreach (var currFile in files)
+                    {
+                        allFilesContent.AppendLine(File.ReadAllText(currFile));
+                    }
+
+                    InputAddresses.Text = allFilesContent.ToString();
+                }
+            }
+        }
+
+        private void InputAddresses_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Copy;
+            else
+                e.Effect = DragDropEffects.None;
         }
     }
 }

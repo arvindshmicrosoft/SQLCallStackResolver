@@ -34,41 +34,44 @@
             this.InputAddresses = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
-            // button1
+            // OkButton
             // 
             this.OkButton.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.OkButton.Location = new System.Drawing.Point(240, 394);
-            this.OkButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.OkButton.Margin = new System.Windows.Forms.Padding(2);
             this.OkButton.Name = "OkButton";
             this.OkButton.Size = new System.Drawing.Size(63, 28);
             this.OkButton.TabIndex = 0;
             this.OkButton.Text = "OK";
             this.OkButton.UseVisualStyleBackColor = true;
             // 
-            // button2
+            // FormCancelButton
             // 
             this.FormCancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.FormCancelButton.Location = new System.Drawing.Point(319, 394);
-            this.FormCancelButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.FormCancelButton.Name = "CancelButton";
+            this.FormCancelButton.Margin = new System.Windows.Forms.Padding(2);
+            this.FormCancelButton.Name = "FormCancelButton";
             this.FormCancelButton.Size = new System.Drawing.Size(63, 28);
             this.FormCancelButton.TabIndex = 1;
             this.FormCancelButton.Text = "Cancel";
             this.FormCancelButton.UseVisualStyleBackColor = true;
             // 
-            // textBox1
+            // InputAddresses
             // 
+            this.InputAddresses.AllowDrop = true;
             this.InputAddresses.Location = new System.Drawing.Point(0, 0);
-            this.InputAddresses.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.InputAddresses.Margin = new System.Windows.Forms.Padding(2);
             this.InputAddresses.MaxLength = 999999999;
             this.InputAddresses.Multiline = true;
-            this.InputAddresses.Name = "textBox1";
+            this.InputAddresses.Name = "InputAddresses";
             this.InputAddresses.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.InputAddresses.Size = new System.Drawing.Size(622, 384);
             this.InputAddresses.TabIndex = 2;
-            this.InputAddresses.Text = resources.GetString("textBox1.Text");
+            this.InputAddresses.Text = resources.GetString("InputAddresses.Text");
             this.InputAddresses.WordWrap = false;
-            this.InputAddresses.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
+            this.InputAddresses.DragDrop += new System.Windows.Forms.DragEventHandler(this.InputAddresses_DragDrop);
+            this.InputAddresses.DragOver += new System.Windows.Forms.DragEventHandler(this.InputAddresses_DragOver);
+            this.InputAddresses.KeyDown += new System.Windows.Forms.KeyEventHandler(this.InputAddresses_KeyDown);
             // 
             // MultilineInput
             // 
@@ -80,7 +83,7 @@
             this.Controls.Add(this.FormCancelButton);
             this.Controls.Add(this.OkButton);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "MultilineInput";

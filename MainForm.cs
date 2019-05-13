@@ -128,13 +128,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void LoadXELButton_Click(object sender, EventArgs e)
         {
-            var xelFileName = Microsoft.VisualBasic.Interaction.InputBox("Enter full path to XEL file (including extension)",
-                       "XEL file name",
-                       null,
-                       0,
-                       0);
+            genericOpenFileDlg.CheckPathExists = true;
+            genericOpenFileDlg.CheckFileExists = true;
+            genericOpenFileDlg.FileName = String.Empty;
+            genericOpenFileDlg.Filter = "XEL files (*.xel)|*.xel|All files (*.*)|*.*";
+            genericOpenFileDlg.Title = "Select XEL file";
 
-            callStackInput.Text = this._resolver.GetXMLEquivalent(xelFileName);
+            var res = genericOpenFileDlg.ShowDialog(this);
+
+            if (res != DialogResult.Cancel)
+            {
+                var xelFileName = genericOpenFileDlg.FileName;
+                callStackInput.Text = this._resolver.GetXMLEquivalent(xelFileName);
+            }
         }
 
         private void CallStackInput_DragDrop(object sender, DragEventArgs e)
@@ -163,6 +169,22 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 e.Effect = DragDropEffects.Copy;
             else
                 e.Effect = DragDropEffects.None;
+        }
+
+        private void PDBPathPicker_Click(object sender, EventArgs e)
+        {
+            genericOpenFileDlg.CheckPathExists = false;
+            genericOpenFileDlg.CheckFileExists = false;
+            genericOpenFileDlg.FileName = "select folder only";
+            genericOpenFileDlg.Filter = "All files (*.*)|*.*";
+            genericOpenFileDlg.Title = "Select FOLDER path to your PDBs";
+
+            var res = genericOpenFileDlg.ShowDialog(this);
+
+            if (res != DialogResult.Cancel)
+            {
+                pdbPaths.AppendText((pdbPaths.TextLength == 0 ? string.Empty : ";") + Path.GetDirectoryName(genericOpenFileDlg.FileName));
+            }
         }
     }
 }

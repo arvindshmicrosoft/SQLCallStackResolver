@@ -146,23 +146,27 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 Parallel.ForEach(xelEvents, evt =>
                 {
-                    foreach (PublishedAction act in evt.Actions)
-                    {
-                        if (act.Value is CallStack)
-                        {
-                            CallStack castStack = (act.Value as CallStack);
-                            var callStackString = castStack.ToString();
+                    var allStacks = (from PublishedAction actTmp in evt.Actions
+                                        where actTmp.Value is CallStack
+                                        select actTmp.Value as CallStack)
+                                        .Union(
+                                        from PublishedEventField actTmp in evt.Fields
+                                        where actTmp.Value is CallStack
+                                        select actTmp.Value as CallStack);
 
-                            lock (callstackSlots)
+                    foreach (var castStack in allStacks)
+                    {
+                        var callStackString = castStack.ToString();
+
+                        lock (callstackSlots)
+                        {
+                            if (!callstackSlots.ContainsKey(callStackString))
                             {
-                                if (!callstackSlots.ContainsKey(callStackString))
-                                {
-                                    callstackSlots.Add(callStackString, 1);
-                                }
-                                else
-                                {
-                                    callstackSlots[callStackString]++;
-                                }
+                                callstackSlots.Add(callStackString, 1);
+                            }
+                            else
+                            {
+                                callstackSlots[callStackString]++;
                             }
                         }
                     }
