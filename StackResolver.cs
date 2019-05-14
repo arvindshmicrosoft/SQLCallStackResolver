@@ -130,58 +130,98 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// Read a XEL file, consume all callstacks, hash them and return the equivalent XML
         /// </summary>
-        /// <param name="xelFileName">Full path to the XEL file to read</param>
+        /// <param name="xelFiles">List of paths to XEL files to read</param>
         /// <returns>XML equivalent of the histogram corresponding to these events</returns>
-        internal string GetXMLEquivalent(string xelFileName)
+        internal string ExtractFromXEL(string[] xelFiles, bool bucketize)
         {
-            if (!File.Exists(xelFileName))
-            {
-                return null;
-            }
-
             var callstackSlots = new Dictionary<string, long>();
+            var callstackRaw = new Dictionary<string, string>();
             var xmlEquivalent = new StringBuilder();
 
-            using (var xelEvents = new QueryableXEventData(xelFileName))
+            foreach (var xelFileName in xelFiles)
             {
-                Parallel.ForEach(xelEvents, evt =>
+                if (File.Exists(xelFileName))
                 {
-                    var allStacks = (from PublishedAction actTmp in evt.Actions
-                                        where actTmp.Value is CallStack
-                                        select actTmp.Value as CallStack)
-                                        .Union(
-                                        from PublishedEventField actTmp in evt.Fields
-                                        where actTmp.Value is CallStack
-                                        select actTmp.Value as CallStack);
-
-                    foreach (var castStack in allStacks)
+                    try
                     {
-                        var callStackString = castStack.ToString();
-
-                        lock (callstackSlots)
+                        using (var xelEvents = new QueryableXEventData(xelFileName))
                         {
-                            if (!callstackSlots.ContainsKey(callStackString))
+                            Parallel.ForEach(xelEvents, evt =>
                             {
-                                callstackSlots.Add(callStackString, 1);
-                            }
-                            else
-                            {
-                                callstackSlots[callStackString]++;
-                            }
+                                var allStacks = (from PublishedAction actTmp in evt.Actions
+                                                 where actTmp.Value is CallStack
+                                                 select actTmp.Value as CallStack)
+                                                    .Union(
+                                                    from PublishedEventField actTmp in evt.Fields
+                                                    where actTmp.Value is CallStack
+                                                    select actTmp.Value as CallStack);
+
+                                foreach (var castStack in allStacks)
+                                {
+                                    var callStackString = castStack.ToString();
+
+                                    if (string.IsNullOrEmpty(callStackString))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (bucketize)
+                                    {
+                                        lock (callstackSlots)
+                                        {
+                                            if (!callstackSlots.ContainsKey(callStackString))
+                                            {
+                                                callstackSlots.Add(callStackString, 1);
+                                            }
+                                            else
+                                            {
+                                                callstackSlots[callStackString]++;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
+                                            xelFileName,
+                                            evt.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.mi"),
+                                            evt.UUID);
+
+                                        lock (callstackRaw)
+                                        {
+                                            callstackRaw.Add(evtId, callStackString);
+                                        }
+                                    }
+                                }
+                            });
                         }
                     }
-                });
+                    catch(EventFileInvalidException)
+                    {
+                        return string.Format("Could not process file {0} - it may not be a valid XEL file!", xelFileName);
+                    }
+                }
             }
 
-            xmlEquivalent.AppendLine("<HistogramTarget truncated=\"0\" buckets=\"256\">");
-
-            foreach (KeyValuePair<string, long> item in callstackSlots.OrderByDescending(key => key.Value))
+            if (bucketize)
             {
-                xmlEquivalent.AppendFormat("<Slot count=\"{0}\"><value>{1}</value>", callstackSlots[item.Key], item.Key);
-                xmlEquivalent.AppendLine();
-            }
+                xmlEquivalent.AppendLine("<HistogramTarget truncated=\"0\" buckets=\"256\">");
 
-            xmlEquivalent.AppendLine("</HistogramTarget>");
+                foreach (var item in callstackSlots.OrderByDescending(key => key.Value))
+                {
+                    xmlEquivalent.AppendFormat("<Slot count=\"{0}\"><value>{1}</value></Slot>", item.Value, item.Key);
+                    xmlEquivalent.AppendLine();
+                }
+
+                xmlEquivalent.AppendLine("</HistogramTarget>");
+            }
+            else
+            {
+                foreach (var item in callstackRaw)
+                {
+                    xmlEquivalent.AppendLine(item.Key);
+                    xmlEquivalent.AppendLine(item.Value);
+                }
+            }
 
             return xmlEquivalent.ToString();
         }

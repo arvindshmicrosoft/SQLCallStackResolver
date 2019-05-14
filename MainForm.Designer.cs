@@ -75,6 +75,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.includeOffsets = new System.Windows.Forms.CheckBox();
             this.PDBPathPicker = new System.Windows.Forms.Button();
             this.BinaryPathPicker = new System.Windows.Forms.Button();
+            this.BucketizeXEL = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // ResolveCallStackButton
@@ -114,9 +115,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.pdbRecurse.Location = new System.Drawing.Point(479, 481);
             this.pdbRecurse.Margin = new System.Windows.Forms.Padding(2);
             this.pdbRecurse.Name = "pdbRecurse";
-            this.pdbRecurse.Size = new System.Drawing.Size(143, 21);
+            this.pdbRecurse.Size = new System.Drawing.Size(83, 21);
             this.pdbRecurse.TabIndex = 4;
-            this.pdbRecurse.Text = "Check sub folders";
+            this.pdbRecurse.Text = "Recurse";
             this.pdbRecurse.UseVisualStyleBackColor = true;
             // 
             // callStackInput
@@ -151,7 +152,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // EnterBaseAddresses
             // 
-            this.EnterBaseAddresses.Location = new System.Drawing.Point(811, 474);
+            this.EnterBaseAddresses.Location = new System.Drawing.Point(738, 474);
             this.EnterBaseAddresses.Margin = new System.Windows.Forms.Padding(2);
             this.EnterBaseAddresses.Name = "EnterBaseAddresses";
             this.EnterBaseAddresses.Size = new System.Drawing.Size(85, 60);
@@ -168,9 +169,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.DLLrecurse.Location = new System.Drawing.Point(479, 512);
             this.DLLrecurse.Margin = new System.Windows.Forms.Padding(2);
             this.DLLrecurse.Name = "DLLrecurse";
-            this.DLLrecurse.Size = new System.Drawing.Size(143, 21);
+            this.DLLrecurse.Size = new System.Drawing.Size(83, 21);
             this.DLLrecurse.TabIndex = 10;
-            this.DLLrecurse.Text = "Check sub folders";
+            this.DLLrecurse.Text = "Recurse";
             this.DLLrecurse.UseVisualStyleBackColor = true;
             // 
             // binaryPaths
@@ -194,7 +195,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // FramesOnSingleLine
             // 
             this.FramesOnSingleLine.AutoSize = true;
-            this.FramesOnSingleLine.Location = new System.Drawing.Point(900, 474);
+            this.FramesOnSingleLine.Location = new System.Drawing.Point(831, 474);
             this.FramesOnSingleLine.Margin = new System.Windows.Forms.Padding(2);
             this.FramesOnSingleLine.Name = "FramesOnSingleLine";
             this.FramesOnSingleLine.Size = new System.Drawing.Size(101, 38);
@@ -204,7 +205,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // GetPDBDnldScript
             // 
-            this.GetPDBDnldScript.Location = new System.Drawing.Point(716, 474);
+            this.GetPDBDnldScript.Location = new System.Drawing.Point(643, 474);
             this.GetPDBDnldScript.Margin = new System.Windows.Forms.Padding(2);
             this.GetPDBDnldScript.Name = "GetPDBDnldScript";
             this.GetPDBDnldScript.Size = new System.Drawing.Size(91, 60);
@@ -215,12 +216,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // LoadXELButton
             // 
-            this.LoadXELButton.Location = new System.Drawing.Point(640, 474);
+            this.LoadXELButton.Location = new System.Drawing.Point(567, 474);
             this.LoadXELButton.Margin = new System.Windows.Forms.Padding(2);
             this.LoadXELButton.Name = "LoadXELButton";
             this.LoadXELButton.Size = new System.Drawing.Size(72, 60);
             this.LoadXELButton.TabIndex = 14;
-            this.LoadXELButton.Text = "Load XEL";
+            this.LoadXELButton.Text = "Load XEL file(s)";
             this.LoadXELButton.UseVisualStyleBackColor = true;
             this.LoadXELButton.Click += new System.EventHandler(this.LoadXELButton_Click);
             // 
@@ -229,7 +230,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.IncludeLineNumbers.AutoSize = true;
             this.IncludeLineNumbers.Checked = true;
             this.IncludeLineNumbers.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.IncludeLineNumbers.Location = new System.Drawing.Point(900, 512);
+            this.IncludeLineNumbers.Location = new System.Drawing.Point(831, 512);
             this.IncludeLineNumbers.Margin = new System.Windows.Forms.Padding(2);
             this.IncludeLineNumbers.Name = "IncludeLineNumbers";
             this.IncludeLineNumbers.Size = new System.Drawing.Size(101, 21);
@@ -240,18 +241,18 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // RelookupSource
             // 
             this.RelookupSource.AutoSize = true;
-            this.RelookupSource.Location = new System.Drawing.Point(1006, 481);
+            this.RelookupSource.Location = new System.Drawing.Point(937, 475);
             this.RelookupSource.Margin = new System.Windows.Forms.Padding(2);
             this.RelookupSource.Name = "RelookupSource";
-            this.RelookupSource.Size = new System.Drawing.Size(147, 21);
+            this.RelookupSource.Size = new System.Drawing.Size(90, 38);
             this.RelookupSource.TabIndex = 16;
-            this.RelookupSource.Text = "Relookup Source?";
+            this.RelookupSource.Text = "Relookup\r\nsrc?";
             this.RelookupSource.UseVisualStyleBackColor = true;
             // 
             // includeOffsets
             // 
             this.includeOffsets.AutoSize = true;
-            this.includeOffsets.Location = new System.Drawing.Point(1006, 512);
+            this.includeOffsets.Location = new System.Drawing.Point(937, 512);
             this.includeOffsets.Margin = new System.Windows.Forms.Padding(2);
             this.includeOffsets.Name = "includeOffsets";
             this.includeOffsets.Size = new System.Drawing.Size(83, 21);
@@ -278,12 +279,26 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.BinaryPathPicker.Text = "...";
             this.BinaryPathPicker.UseVisualStyleBackColor = true;
             // 
+            // BucketizeXEL
+            // 
+            this.BucketizeXEL.AutoSize = true;
+            this.BucketizeXEL.Checked = true;
+            this.BucketizeXEL.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.BucketizeXEL.Location = new System.Drawing.Point(1031, 481);
+            this.BucketizeXEL.Margin = new System.Windows.Forms.Padding(2);
+            this.BucketizeXEL.Name = "BucketizeXEL";
+            this.BucketizeXEL.Size = new System.Drawing.Size(129, 21);
+            this.BucketizeXEL.TabIndex = 21;
+            this.BucketizeXEL.Text = "Bucketize XEL?";
+            this.BucketizeXEL.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(1283, 542);
+            this.Controls.Add(this.BucketizeXEL);
             this.Controls.Add(this.BinaryPathPicker);
             this.Controls.Add(this.PDBPathPicker);
             this.Controls.Add(this.includeOffsets);
@@ -333,6 +348,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private System.Windows.Forms.CheckBox includeOffsets;
         private System.Windows.Forms.Button PDBPathPicker;
         private System.Windows.Forms.Button BinaryPathPicker;
+        private System.Windows.Forms.CheckBox BucketizeXEL;
     }
 }
 

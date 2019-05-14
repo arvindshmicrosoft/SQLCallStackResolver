@@ -128,6 +128,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void LoadXELButton_Click(object sender, EventArgs e)
         {
+            genericOpenFileDlg.Multiselect = true;
             genericOpenFileDlg.CheckPathExists = true;
             genericOpenFileDlg.CheckFileExists = true;
             genericOpenFileDlg.FileName = String.Empty;
@@ -138,8 +139,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (res != DialogResult.Cancel)
             {
-                var xelFileName = genericOpenFileDlg.FileName;
-                callStackInput.Text = this._resolver.GetXMLEquivalent(xelFileName);
+                callStackInput.Text = this._resolver.ExtractFromXEL(genericOpenFileDlg.FileNames, BucketizeXEL.Checked);
             }
         }
 
@@ -153,9 +153,20 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 if (files != null && files.Length != 0)
                 {
                     var allFilesContent = new StringBuilder();
-                    foreach (var currFile in files)
+
+                    // sample the first file selected and if it is XEL assume all the files are XEL
+                    // if there is any other format in between, it will be rejected by the ExtractFromXEL code
+                    if (Path.GetExtension(files[0]).ToLower() == ".xel")
                     {
-                        allFilesContent.AppendLine(File.ReadAllText(currFile));
+                        allFilesContent.AppendLine(this._resolver.ExtractFromXEL(files, BucketizeXEL.Checked));
+                    }
+                    else
+                    {
+                        // handle the files as text input
+                        foreach (var currFile in files)
+                        {
+                            allFilesContent.AppendLine(File.ReadAllText(currFile));
+                        }
                     }
 
                     callStackInput.Text = allFilesContent.ToString();
@@ -173,6 +184,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void PDBPathPicker_Click(object sender, EventArgs e)
         {
+            genericOpenFileDlg.Multiselect = false;
             genericOpenFileDlg.CheckPathExists = false;
             genericOpenFileDlg.CheckFileExists = false;
             genericOpenFileDlg.FileName = "select folder only";
