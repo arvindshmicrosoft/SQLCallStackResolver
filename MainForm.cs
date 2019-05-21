@@ -198,5 +198,22 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 pdbPaths.AppendText((pdbPaths.TextLength == 0 ? string.Empty : ";") + Path.GetDirectoryName(genericOpenFileDlg.FileName));
             }
         }
+
+        private void BinaryPathPicker_Click(object sender, EventArgs e)
+        {
+            genericOpenFileDlg.Multiselect = false;
+            genericOpenFileDlg.CheckPathExists = false;
+            genericOpenFileDlg.CheckFileExists = false;
+            genericOpenFileDlg.FileName = "select folder only";
+            genericOpenFileDlg.Filter = "All files (*.*)|*.*";
+            genericOpenFileDlg.Title = "Select FOLDER path to the SQL binaries";
+
+            var res = genericOpenFileDlg.ShowDialog(this);
+
+            if (res != DialogResult.Cancel)
+            {
+                binaryPaths.AppendText((binaryPaths.TextLength == 0 ? string.Empty : ";") + Path.GetDirectoryName(genericOpenFileDlg.FileName));
+            }
+        }
     }
 }
