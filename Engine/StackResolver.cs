@@ -36,8 +36,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using Dia;
     using Microsoft.Diagnostics.Runtime.Interop;
     using Microsoft.Diagnostics.Runtime.Utilities;
-    using Microsoft.SqlServer.XEvent;
-    using Microsoft.SqlServer.XEvent.Linq;
+    using Microsoft.SqlServer.XEvent.XELite;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -46,6 +45,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Xml;
 
@@ -142,28 +142,32 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var callstackRaw = new Dictionary<string, string>();
             var xmlEquivalent = new StringBuilder();
 
+            // the below feels quite hacky. Unfortunately till such time that we have strong typing in XELite I believe this is necessary
+            var relevantKeyNames = new string[] { "callstack", "call_stack", "stack_frames" };
+
             foreach (var xelFileName in xelFiles)
             {
                 if (File.Exists(xelFileName))
                 {
-                    try
-                    {
-                        using (var xelEvents = new QueryableXEventData(xelFileName))
-                        {
-                            Parallel.ForEach(xelEvents, evt =>
+                        var xeStream = new XEFileEventStreamer(xelFileName);
+
+                        xeStream.ReadEventStream(
+                            () =>
                             {
-                                var allStacks = (from PublishedAction actTmp in evt.Actions
-                                                 where actTmp.Value is CallStack
-                                                 select actTmp.Value as CallStack)
+                                return Task.CompletedTask;
+                            },
+                            evt =>
+                            {
+                                var allStacks = (from actTmp in evt.Actions
+                                                 where relevantKeyNames.Contains(actTmp.Key.ToLower())
+                                                 select actTmp.Value as string)
                                                     .Union(
-                                                    from PublishedEventField actTmp in evt.Fields
-                                                    where actTmp.Value is CallStack
-                                                    select actTmp.Value as CallStack);
+                                                    from fldTmp in evt.Fields
+                                                    where relevantKeyNames.Contains(fldTmp.Key.ToLower())
+                                                    select fldTmp.Value as string);
 
-                                foreach (var castStack in allStacks)
+                                foreach (var callStackString in allStacks)
                                 {
-                                    var callStackString = castStack.ToString();
-
                                     if (string.IsNullOrEmpty(callStackString))
                                     {
                                         continue;
@@ -196,13 +200,60 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                         }
                                     }
                                 }
-                            });
-                        }
-                    }
-                    catch(EventFileInvalidException)
-                    {
-                        return string.Format("Could not process file {0} - it may not be a valid XEL file!", xelFileName);
-                    }
+
+                                return Task.CompletedTask;
+                            },
+                            CancellationToken.None).Wait();
+
+                        //{
+                        //    Parallel.ForEach(xelEvents, evt =>
+                        //    {
+                        //        var allStacks = (from PublishedAction actTmp in evt.Actions
+                        //                         where actTmp.Value is CallStack
+                        //                         select actTmp.Value as CallStack)
+                        //                            .Union(
+                        //                            from PublishedEventField actTmp in evt.Fields
+                        //                            where actTmp.Value is CallStack
+                        //                            select actTmp.Value as CallStack);
+
+                        //        foreach (var castStack in allStacks)
+                        //        {
+                        //            var callStackString = castStack.ToString();
+
+                        //            if (string.IsNullOrEmpty(callStackString))
+                        //            {
+                        //                continue;
+                        //            }
+
+                        //            if (bucketize)
+                        //            {
+                        //                lock (callstackSlots)
+                        //                {
+                        //                    if (!callstackSlots.ContainsKey(callStackString))
+                        //                    {
+                        //                        callstackSlots.Add(callStackString, 1);
+                        //                    }
+                        //                    else
+                        //                    {
+                        //                        callstackSlots[callStackString]++;
+                        //                    }
+                        //                }
+                        //            }
+                        //            else
+                        //            {
+                        //                var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
+                        //                    xelFileName,
+                        //                    evt.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.mi"),
+                        //                    evt.UUID);
+
+                        //                lock (callstackRaw)
+                        //                {
+                        //                    callstackRaw.Add(evtId, callStackString);
+                        //                }
+                        //            }
+                        //        }
+                        //    });
+                        //}
                 }
             }
 
