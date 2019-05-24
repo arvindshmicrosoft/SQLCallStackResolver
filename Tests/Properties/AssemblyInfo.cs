@@ -2,34 +2,34 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-// General Information about an assembly is controlled through the following 
+// General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("SQLCallStackResolver")]
-[assembly: AssemblyDescription("Utility which helps resolve SQL Server XE callstacks to their readable form")]
+[assembly: AssemblyTitle("SQLCallStackResolver.Tests")]
+[assembly: AssemblyDescription("Tests for SQLCallStackResolver Engine")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microsoft Corporation")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("SQLCallStackResolver")]
-[assembly: AssemblyCopyright("Copyright © Arvind Shyamsundar")]
+[assembly: AssemblyCopyright("Copyright © Arvind Shyamsundar 2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
+// Setting ComVisible to false makes the types in this assembly not visible
+// to COM components.  If you need to access a type in this assembly from
 // COM, set the ComVisible attribute to true on that type.
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("f65803b0-f5b2-4fa4-99b2-c91600e77e26")]
+[assembly: Guid("c6cf5a06-527e-4565-821f-890a6e5a83b2")]
 
 // Version information for an assembly consists of the following four values:
 //
 //      Major Version
-//      Minor Version 
+//      Minor Version
 //      Build Number
 //      Revision
 //
-// You can specify all the values or you can default the Build and Revision Numbers 
+// You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.5.0.0")]

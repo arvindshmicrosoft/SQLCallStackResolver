@@ -34,23 +34,22 @@
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Dia;
+    using Microsoft.Diagnostics.Runtime.Interop;
+    using Microsoft.Diagnostics.Runtime.Utilities;
+    using Microsoft.SqlServer.XEvent.XELite;
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.IO.MemoryMappedFiles;
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
-    using System.Windows.Forms;
-    using System.Xml;
+    using System.Threading;
     using System.Threading.Tasks;
-    using Microsoft.Diagnostics.Runtime.Utilities;
-    using System.IO.MemoryMappedFiles;
-    using Microsoft.Diagnostics.Runtime.Interop;
-    using Microsoft.SqlServer.XEvent;
-    using Microsoft.SqlServer.XEvent.Linq;
+    using System.Xml;
 
-    class StackResolver
+    public class StackResolver
     {
         /// <summary>
         /// This is used to store module name and start / end virtual address ranges
@@ -87,6 +86,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // sqldk.dll!Ordinal947+0x25f
             // sqldk.dll!Ordinal699 + 0x5f
             // sqlmin.dll!Ordinal1634 + 0x76c
+
+            // More recent patterns which we choose not to support, because in these cases the module+offset is cleanly represented and it does symbolize nicely
+            // 00007FF818405E70 Module(sqlmin+0000000001555E70) (Ordinal1877 + 00000000000004B0)                                  
+            // 00007FF81840226A Module(sqlmin+000000000155226A) (Ordinal1261 + 00000000000071EA)                                  
+            // 00007FF81555A663 Module(sqllang+0000000000C6A663) (Ordinal1203 + 0000000000005E33)
 
             // define a regex to identify such ordinal based frames
             var rgxOrdinalNotation = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*(0[xX])*");
@@ -132,34 +136,38 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// </summary>
         /// <param name="xelFiles">List of paths to XEL files to read</param>
         /// <returns>XML equivalent of the histogram corresponding to these events</returns>
-        internal string ExtractFromXEL(string[] xelFiles, bool bucketize)
+        public string ExtractFromXEL(string[] xelFiles, bool bucketize)
         {
             var callstackSlots = new Dictionary<string, long>();
             var callstackRaw = new Dictionary<string, string>();
             var xmlEquivalent = new StringBuilder();
 
+            // the below feels quite hacky. Unfortunately till such time that we have strong typing in XELite I believe this is necessary
+            var relevantKeyNames = new string[] { "callstack", "call_stack", "stack_frames" };
+
             foreach (var xelFileName in xelFiles)
             {
                 if (File.Exists(xelFileName))
                 {
-                    try
-                    {
-                        using (var xelEvents = new QueryableXEventData(xelFileName))
-                        {
-                            Parallel.ForEach(xelEvents, evt =>
+                        var xeStream = new XEFileEventStreamer(xelFileName);
+
+                        xeStream.ReadEventStream(
+                            () =>
                             {
-                                var allStacks = (from PublishedAction actTmp in evt.Actions
-                                                 where actTmp.Value is CallStack
-                                                 select actTmp.Value as CallStack)
+                                return Task.CompletedTask;
+                            },
+                            evt =>
+                            {
+                                var allStacks = (from actTmp in evt.Actions
+                                                 where relevantKeyNames.Contains(actTmp.Key.ToLower())
+                                                 select actTmp.Value as string)
                                                     .Union(
-                                                    from PublishedEventField actTmp in evt.Fields
-                                                    where actTmp.Value is CallStack
-                                                    select actTmp.Value as CallStack);
+                                                    from fldTmp in evt.Fields
+                                                    where relevantKeyNames.Contains(fldTmp.Key.ToLower())
+                                                    select fldTmp.Value as string);
 
-                                foreach (var castStack in allStacks)
+                                foreach (var callStackString in allStacks)
                                 {
-                                    var callStackString = castStack.ToString();
-
                                     if (string.IsNullOrEmpty(callStackString))
                                     {
                                         continue;
@@ -192,13 +200,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                         }
                                     }
                                 }
-                            });
-                        }
-                    }
-                    catch(EventFileInvalidException)
-                    {
-                        return string.Format("Could not process file {0} - it may not be a valid XEL file!", xelFileName);
-                    }
+
+                                return Task.CompletedTask;
+                            },
+                            CancellationToken.None).Wait();
                 }
             }
 
@@ -254,10 +259,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <returns></returns>
         public unsafe Dictionary<int, ExportedSymbol> GetExports(string DLLPath)
         {
-            PEHeader Header = new Microsoft.Diagnostics.Runtime.Utilities.PEFile(DLLPath).Header;
+            var Header = new PEFile(DLLPath).Header;
 
             var dir = Header.ExportDirectory;
-            var offset = Header.RvaToFileOffset(dir.VirtualAddress);
+            var offset = Header.RvaToFileOffset(Convert.ToInt32(dir.VirtualAddress));
 
             // this is the placeholder for the final mapping of ordinal # to address map
             Dictionary<int, ExportedSymbol> exports = null;
@@ -649,7 +654,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// and constructs an internal map of each modules start and end virtual address
         /// </summary>
         /// <param name="baseAddressesString"></param>
-        internal bool ProcessBaseAddresses(string baseAddressesString)
+        public bool ProcessBaseAddresses(string baseAddressesString)
         {
             bool retVal = true;
 
@@ -748,7 +753,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
         /// <param name="includeOffsets">Whether to output func offsets or not as part of output</param>
         /// <returns></returns>
-        internal string ResolveCallstacks(string inputCallstackText, 
+        public string ResolveCallstacks(string inputCallstackText, 
             string symPath, 
             bool searchPDBsRecursively, 
             List<string> dllPaths, 
@@ -895,7 +900,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="dllSearchPath"></param>
         /// <param name="recurse"></param>
         /// <returns></returns>
-        internal string ObtainPDBDownloadCommandsfromDLL(string dllSearchPath, bool recurse)
+        public string ObtainPDBDownloadCommandsfromDLL(string dllSearchPath, bool recurse)
         {
             if (string.IsNullOrEmpty(dllSearchPath))
             {

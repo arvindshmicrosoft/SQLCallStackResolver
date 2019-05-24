@@ -278,6 +278,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.BinaryPathPicker.TabIndex = 20;
             this.BinaryPathPicker.Text = "...";
             this.BinaryPathPicker.UseVisualStyleBackColor = true;
+            this.BinaryPathPicker.Click += new System.EventHandler(this.BinaryPathPicker_Click);
             // 
             // BucketizeXEL
             // 
