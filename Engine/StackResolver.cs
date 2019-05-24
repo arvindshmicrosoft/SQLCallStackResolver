@@ -204,56 +204,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 return Task.CompletedTask;
                             },
                             CancellationToken.None).Wait();
-
-                        //{
-                        //    Parallel.ForEach(xelEvents, evt =>
-                        //    {
-                        //        var allStacks = (from PublishedAction actTmp in evt.Actions
-                        //                         where actTmp.Value is CallStack
-                        //                         select actTmp.Value as CallStack)
-                        //                            .Union(
-                        //                            from PublishedEventField actTmp in evt.Fields
-                        //                            where actTmp.Value is CallStack
-                        //                            select actTmp.Value as CallStack);
-
-                        //        foreach (var castStack in allStacks)
-                        //        {
-                        //            var callStackString = castStack.ToString();
-
-                        //            if (string.IsNullOrEmpty(callStackString))
-                        //            {
-                        //                continue;
-                        //            }
-
-                        //            if (bucketize)
-                        //            {
-                        //                lock (callstackSlots)
-                        //                {
-                        //                    if (!callstackSlots.ContainsKey(callStackString))
-                        //                    {
-                        //                        callstackSlots.Add(callStackString, 1);
-                        //                    }
-                        //                    else
-                        //                    {
-                        //                        callstackSlots[callStackString]++;
-                        //                    }
-                        //                }
-                        //            }
-                        //            else
-                        //            {
-                        //                var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
-                        //                    xelFileName,
-                        //                    evt.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.mi"),
-                        //                    evt.UUID);
-
-                        //                lock (callstackRaw)
-                        //                {
-                        //                    callstackRaw.Add(evtId, callStackString);
-                        //                }
-                        //            }
-                        //        }
-                        //    });
-                        //}
                 }
             }
 

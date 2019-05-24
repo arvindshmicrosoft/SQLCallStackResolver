@@ -54,7 +54,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             var csr = new StackResolver();
             var ret = csr.ResolveCallstacks("Return Addr: 00007FF830D4CDA4 Module(KERNELBASE+000000000009CDA4)",
-                @"..\..\TestCases\TestBlockResolution",
+                @"..\..\Tests\TestCases\TestBlockResolution",
                 false,
                 null,
                 false,
@@ -70,10 +70,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             var csr = new StackResolver();
             var dllPaths = new System.Collections.Generic.List<string>();
-            dllPaths.Add(@"..\..\TestCases\TestOrdinal");
+            dllPaths.Add(@"..\..\Tests\TestCases\TestOrdinal");
 
             var ret = csr.ResolveCallstacks("sqldk!Ordinal298+00000000000004A5",
-                @"..\..\TestCases\TestOrdinal",
+                @"..\..\Tests\TestCases\TestOrdinal",
                 false,
                 dllPaths,
                 false,
