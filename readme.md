@@ -1,5 +1,5 @@
 # Installation
-Please refer to the Releases section for a ready-to-run package and pre-requisites.
+Please refer to the Releases section for a ready-to-run set of binaries. As of release 1.5 there is no external installation required other than .NET Framework 4.6.1 or above. We now include the [msdia140.dll](https://blogs.msdn.microsoft.com/calvin_hsia/2016/07/30/whats-in-a-pdb-file-use-the-debug-interface-access-sdk/) and [XELite](https://www.nuget.org/packages/Microsoft.SqlServer.XEvent.XELite/) as part of the ZIP file with the rest of the binaries.
 
 # Usage
 The tool comes with some pre-populated examples in the textboxes, just follow that example with your real-world stack(s).
