@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -15,6 +14,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     public partial class SQLBuildsForm : Form
     {
         const string MagicTagForBuilds = "Build";
+        public string pathToPDBs = string.Empty;
 
         public SQLBuildsForm()
         {
@@ -23,30 +23,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void Treeview_Load(object sender, EventArgs e)
         {
-            var allBuilds = new Dictionary<string, SQLBuildInfo>();
-
-            using (var rdr = new StreamReader(@"C:\workarea\SQLCallStackResolver\sqlbuildinfo.json"))
-            {
-                using (var jsonRdr = new JsonTextReader(rdr))
-                {
-                    jsonRdr.SupportMultipleContent = true;
-
-                    var serializer = new JsonSerializer();
-
-                    while (true)
-                    {
-                        if (!jsonRdr.Read())
-                        {
-                            break;
-                        }
-
-                        var currBuildInfo = serializer.Deserialize<SQLBuildInfo>(jsonRdr);
-                        allBuilds.Add(currBuildInfo.BuildNumber, currBuildInfo);
-                    }
-                }
-
-                rdr.Close();
-            }
+            var allBuilds = SQLBuildInfo.GetSqlBuildInfo(@"C:\workarea\SQLCallStackResolver\sqlbuildinfo.json");
 
             // top-level is major versions
             var sqlMajorVersions = (from SQLBuildInfo b in allBuilds.Values
@@ -68,9 +45,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     var blds = (from SQLBuildInfo b in allBuilds.Values
                                       where b.ProductMajorVersion == ver && b.ProductLevel == pl
-                                      select b).Distinct();
+                                      select b).Distinct().OrderByDescending(b => b.BuildNumber);
 
-                    treeView1.Nodes[ver].Nodes[pl].Nodes.AddRange(blds.Select(bld => new TreeNode(bld.ToString()) { Name = bld.BuildNumber, Tag = MagicTagForBuilds }).ToArray());
+                    treeView1.Nodes[ver].Nodes[pl].Nodes.AddRange(blds.Select(bld => new TreeNode(bld.ToString()) { Name = bld.ToString(), Tag = MagicTagForBuilds }).ToArray());
                 }
             }
         }

@@ -917,7 +917,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
             else
             {
-                finalCommand.AppendLine("'files':[");
+                //finalCommand.AppendLine("'files':[");
             }
 
             foreach (var currentModule in moduleNames)
@@ -928,7 +928,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 foreach (var currPath in splitRootPaths)
                 {
                     var foundFiles = from f in Directory.EnumerateFiles(currPath, currentModule + ".*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
-                                     where !f.EndsWith(".pdb", StringComparison.InvariantCultureIgnoreCase)
+                                     where f.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) || f.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase)
                                      select f;
 
                     if (foundFiles.Count() > 0)
@@ -961,7 +961,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             }
                             else
                             {
-                                finalCommand.AppendFormat("'{0}',", downloadUri);
+                                finalCommand.AppendLine(downloadUri);
                             }
                         }
                     }
@@ -970,10 +970,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (getJSON)
             {
-                finalCommand.AppendLine("]");
+                //finalCommand.AppendLine("]");
             }
 
-            return finalCommand.ToString().Replace(",]", "]").Replace("'", "\"");
+            return finalCommand.ToString(); //.Replace(",]", "]").Replace("'", "\"");
         }
     }
 

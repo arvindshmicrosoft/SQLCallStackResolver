@@ -1,391 +1,1929 @@
+﻿
 {
   "ProductMajorVersion": "SQL Server 2017",
-  "ProductLevel": "post-RTM",
+  "ProductLevel": "RTM",
+  "Label": "CU15 (Latest build)",
+  "BuildNumber": "14.0.3162.1",
+  "KBInfo": "KB4498951",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU14+GDR",
+  "BuildNumber": "14.0.3103.1",
+  "KBInfo": "KB4494352",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU14",
+  "BuildNumber": "14.0.3076.1",
+  "KBInfo": "KB4484710",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
   "Label": "CU13",
   "BuildNumber": "14.0.3048.4",
   "KBInfo": "KB4466404",
-  "PDBUrls": [
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SqlDK.pdb/db7d37e644684c76aca6244566f04ddb2/SqlDK.pdb",
-    "-OutFile",
-    "<somepath>\\SqlDK.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlmin.pdb/deb451448a184a019d15fbecb4b3dbd42/sqlmin.pdb",
-    "-OutFile",
-    "<somepath>\\sqlmin.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqllang.pdb/154b616962204fc98ab8ba2ac0944fd62/sqllang.pdb",
-    "-OutFile",
-    "<somepath>\\sqllang.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SqlTsEs.pdb/a8ea1f9fa4a8417b901a2e9c1108cd532/SqlTsEs.pdb",
-    "-OutFile",
-    "<somepath>\\SqlTsEs.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlaccess.pdb/162006a3c04048a5b3c3bd6db4d37d5c3/sqlaccess.pdb",
-    "-OutFile",
-    "<somepath>\\sqlaccess.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/qds.pdb/254e81f1cf6d407188805d66c3fc8a002/qds.pdb",
-    "-OutFile",
-    "<somepath>\\qds.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkruntime.pdb/6ad53123fe984297bf11178b0f6833b61/hkruntime.pdb",
-    "-OutFile",
-    "<somepath>\\hkruntime.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkengine.pdb/64e83552a4324544b14f7ad910d6dbd31/hkengine.pdb",
-    "-OutFile",
-    "<somepath>\\hkengine.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkcompile.pdb/2750700543774a219883ff4fd8f9b1c71/hkcompile.pdb",
-    "-OutFile",
-    "<somepath>\\hkcompile.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SQLOS.pdb/045b89b9000c427aa2d7eb19476ead711/SQLOS.pdb",
-    "-OutFile",
-    "<somepath>\\SQLOS.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlservr.pdb/bb0704a30a134cc8a0436285de13449b2/sqlservr.pdb",
-    "-OutFile",
-    "<somepath>\\sqlservr.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3048.04",
-    "((SQLServer2017-CU13).181130-2004)"
-  ]
+  "PDBUrls": [  ], "MachineType" :"x64"
 }
 {
   "ProductMajorVersion": "SQL Server 2017",
-  "ProductLevel": "post-RTM",
+  "ProductLevel": "RTM",
   "Label": "CU12",
   "BuildNumber": "14.0.3045.24",
   "KBInfo": "KB4464082",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU11",
+  "BuildNumber": "14.0.3038.14",
+  "KBInfo": "KB4462262",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU10",
+  "BuildNumber": "14.0.3037.1",
+  "KBInfo": "KB4342123",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU9 + GDR",
+  "BuildNumber": "14.0.3035.2",
+  "KBInfo": "KB4293805",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU9",
+  "BuildNumber": "14.0.3030.27",
+  "KBInfo": "KB4341265",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU8",
+  "BuildNumber": "14.0.3029.16",
+  "KBInfo": "KB4338363",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU7",
+  "BuildNumber": "14.0.3026.27",
+  "KBInfo": "KB4229789",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU6",
+  "BuildNumber": "14.0.3025.34",
+  "KBInfo": "KB4101464",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU5",
+  "BuildNumber": "14.0.3023.8",
+  "KBInfo": "KB4092643",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU4",
+  "BuildNumber": "14.0.3022.28",
+  "KBInfo": "KB4056498",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU3",
+  "BuildNumber": "14.0.3015.40",
+  "KBInfo": "KB4052987",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU2",
+  "BuildNumber": "14.0.3008.27",
+  "KBInfo": "KB4052574",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "CU1",
+  "BuildNumber": "14.0.3006.16",
+  "KBInfo": "KB4038634",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "RTM",
+  "BuildNumber": "14.0.1000.169",
+  "KBInfo": "NA",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+
+
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "GDR",
+  "BuildNumber": "14.0.2014.14",
+  "KBInfo": "KB4494351",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "GDR",
+  "BuildNumber": "14.0.2002.14",
+  "KBInfo": "KB4293803",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "GDR",
+  "BuildNumber": "14.0.2000.63",
+  "KBInfo": "KB4057122",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2017",
+  "ProductLevel": "RTM",
+  "Label": "RTM",
+  "BuildNumber": "14.0.1000.169",
+  "KBInfo": "NA",
+  "PDBUrls": [  ], "MachineType" :"x64"
+}
+
+
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP2",
+  "Label": "CU7",
+  "BuildNumber": "13.0.5337.0",
+  "KBInfo": "KB4495256",
   "PDBUrls": [
-    "New-Item",
-    "-Type",
-    "Directory",
-    "-Path",
-    "<somepath>",
-    "-ErrorAction",
-    "SilentlyContinue",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SqlDK.pdb/e1a278df9008417880471554645ffe0e2/SqlDK.pdb",
-    "-OutFile",
-    "<somepath>\\SqlDK.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlmin.pdb/0f960e0b699d427db586034ed7b0fdef2/sqlmin.pdb",
-    "-OutFile",
-    "<somepath>\\sqlmin.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqllang.pdb/3901620f11594833aa71280f8375f0be2/sqllang.pdb",
-    "-OutFile",
-    "<somepath>\\sqllang.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SqlTsEs.pdb/9cfe911d498646b8ae4f2f50a9d067a42/SqlTsEs.pdb",
-    "-OutFile",
-    "<somepath>\\SqlTsEs.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlaccess.pdb/27ed7bd2e8a7400e886335247c98a3073/sqlaccess.pdb",
-    "-OutFile",
-    "<somepath>\\sqlaccess.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/qds.pdb/9ab679cc975b4b1ba1d15706afd6450a2/qds.pdb",
-    "-OutFile",
-    "<somepath>\\qds.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkruntime.pdb/d2812bf323f14d81a9b099908c9ffff61/hkruntime.pdb",
-    "-OutFile",
-    "<somepath>\\hkruntime.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkengine.pdb/6615c4c7be0c407697ca045825239c131/hkengine.pdb",
-    "-OutFile",
-    "<somepath>\\hkengine.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkcompile.pdb/196df91bf910437c9fd9acfa2117826f1/hkcompile.pdb",
-    "-OutFile",
-    "<somepath>\\hkcompile.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SQLOS.pdb/6cc447fe65eb4c59aa455ccbf9b251a91/SQLOS.pdb",
-    "-OutFile",
-    "<somepath>\\SQLOS.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlservr.pdb/5cc64f878ee841aab5448338015a5c952/sqlservr.pdb",
-    "-OutFile",
-    "<somepath>\\sqlservr.pdb",
-    "#",
-    "File",
-    "version",
-    "2017.0140.3045.24",
-    "((SQLServer2017-CU12).181019-0539)"
-  ]
+  ], "MachineType" :"x64"
 }
 {
   "ProductMajorVersion": "SQL Server 2016",
-  "ProductLevel": "post-RTM",
+  "ProductLevel": "SP2",
+  "Label": "CU6",
+  "BuildNumber": "13.0.5292.0",
+  "KBInfo": "KB4488536",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP2",
   "Label": "CU5",
   "BuildNumber": "13.0.5264.1",
   "KBInfo": "KB4475776",
   "PDBUrls": [
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqldk.pdb/0bae10a1491645f8a97b697fe565dd332/sqldk.pdb",
-    "-OutFile",
-    "<somepath>\\sqldk.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlmin.pdb/85a6f0d21b0a4d8f96d6aa8049a1c8892/sqlmin.pdb",
-    "-OutFile",
-    "<somepath>\\sqlmin.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqllang.pdb/f5b7a81e036a4be3bc7c1858909869802/sqllang.pdb",
-    "-OutFile",
-    "<somepath>\\sqllang.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqltses.pdb/e8f4359ed540405ebf50b2593e54434b2/sqltses.pdb",
-    "-OutFile",
-    "<somepath>\\sqltses.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlaccess.pdb/73d85290046448bdbcc3ede97dfc234b2/sqlaccess.pdb",
-    "-OutFile",
-    "<somepath>\\sqlaccess.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/qds.pdb/81dc5887677b47be879138df0c3009b12/qds.pdb",
-    "-OutFile",
-    "<somepath>\\qds.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkruntime.pdb/97818e2e150f41d4a1b3882e98aee44e1/hkruntime.pdb",
-    "-OutFile",
-    "<somepath>\\hkruntime.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkengine.pdb/fcb62686788c4edab5fbbb3586fa70641/hkengine.pdb",
-    "-OutFile",
-    "<somepath>\\hkengine.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/hkcompile.pdb/e3d3a5d84aa04e1c95a508d1a2a121ca1/hkcompile.pdb",
-    "-OutFile",
-    "<somepath>\\hkcompile.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/SQLOS.pdb/8f3f2c17b925463ab3be306a8bfbf6191/SQLOS.pdb",
-    "-OutFile",
-    "<somepath>\\SQLOS.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)",
-    "Invoke-WebRequest",
-    "-uri",
-    "http://msdl.microsoft.com/download/symbols/sqlservr.pdb/21046a92c3c344459925db3348bed5402/sqlservr.pdb",
-    "-OutFile",
-    "<somepath>\\sqlservr.pdb",
-    "#",
-    "File",
-    "version",
-    "2015.0131.5264.01",
-    "((SQL16_SP2_QFE-CU).190110-1506)"
-  ]
+  ], "MachineType" :"x64"
 }
 {
   "ProductMajorVersion": "SQL Server 2016",
-  "ProductLevel": "SP1",
-  "Label": "CU3",
-  "BuildNumber": "13.0.cu3.1",
-  "KBInfo": "Kbsp1cu3",
-  "PDBUrls": [
-  ]
-}
-{
-  "ProductMajorVersion": "SQL Server 2016",
-  "ProductLevel": "SP1",
+  "ProductLevel": "SP2",
   "Label": "CU4",
-  "BuildNumber": "13.0.cu4.1",
-  "KBInfo": "Kbsp1cu4",
+  "BuildNumber": "13.0.5233.0",
+  "KBInfo": "KB4464106",
   "PDBUrls": [
-  ]
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP2",
+  "Label": "CU3",
+  "BuildNumber": "13.0.5216.0",
+  "KBInfo": "KB4458871",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP2",
+  "Label": "CU2 + Security Update",
+  "BuildNumber": "13.0.5201.2",
+  "KBInfo": "KB4458621",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP2",
+  "Label": "CU2",
+  "BuildNumber": "13.0.5153.0",
+  "KBInfo": "KB4340355",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
 }
 {
   "ProductMajorVersion": "SQL Server 2016",
   "ProductLevel": "SP2",
   "Label": "CU1",
-  "BuildNumber": "13.1.cu1.1",
-  "KBInfo": "Kbsp2cu1",
+  "BuildNumber": "13.0.5149.0",
+  "KBInfo": "KB4135048",
   "PDBUrls": [
-  ]
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP2",
+  "Label": "SP2",
+  "BuildNumber": "13.0.5026.0",
+  "KBInfo": "KB4052908",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU15",
+  "BuildNumber": "13.0.4574.0 (Latest build)",
+  "KBInfo": "KB4495257",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU14",
+  "BuildNumber": "13.0.4560.0",
+  "KBInfo": "KB4488535",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU13",
+  "BuildNumber": "13.0.4550.1",
+  "KBInfo": "KB4475775",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU12",
+  "BuildNumber": "13.0.4541.0",
+  "KBInfo": "KB4464343",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU11",
+  "BuildNumber": "13.0.4528.0",
+  "KBInfo": "KB4459676",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU10 + Security Update",
+  "BuildNumber": "13.0.4522.0",
+  "KBInfo": "KB4293808",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU10",
+  "BuildNumber": "13.0.4514.0",
+  "KBInfo": "KB4341569",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU9",
+  "BuildNumber": "13.0.4502.0",
+  "KBInfo": "KB4100997",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU8",
+  "BuildNumber": "13.0.4474.0",
+  "KBInfo": "KB4077064",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU7",
+  "BuildNumber": "13.0.4466.4",
+  "KBInfo": "KB4057119",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU6",
+  "BuildNumber": "13.0.4457.0",
+  "KBInfo": "KB4037354",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU5",
+  "BuildNumber": "13.0.4451.0",
+  "KBInfo": "KB4040714",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU4",
+  "BuildNumber": "13.0.4446.0",
+  "KBInfo": "KB4024305",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU3",
+  "BuildNumber": "13.0.4435.0",
+  "KBInfo": "KB4019916",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU2",
+  "BuildNumber": "13.0.4422.0",
+  "KBInfo": "KB4013106",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "CU1",
+  "BuildNumber": "13.0.4411.0",
+  "KBInfo": "KB3208177  ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "SP1",
+  "Label": "SP1",
+  "BuildNumber": "13.0.4001.0",
+  "KBInfo": "KB3182545  ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU9",
+  "BuildNumber": "13.0.2216.0(latest build)",
+  "KBInfo": "KB4037357",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU8",
+  "BuildNumber": "13.0.2213.0",
+  "KBInfo": "KB4040713",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU7",
+  "BuildNumber": "13.0.2210.0",
+  "KBInfo": "KB4024304",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU6",
+  "BuildNumber": "13.0.2204.0",
+  "KBInfo": "KB4019914",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU5",
+  "BuildNumber": "13.0.2197.0",
+  "KBInfo": "KB4013105",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU4",
+  "BuildNumber": "13.0.2193.0",
+  "KBInfo": "KB3205052 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU3",
+  "BuildNumber": "13.0.2186.6",
+  "KBInfo": "KB3205413 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU2 ",
+  "BuildNumber": "13.0.2164.0",
+  "KBInfo": "KB3182270 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2016",
+  "ProductLevel": "RTM",
+  "Label": "CU1",
+  "BuildNumber": "13.0.2149.0",
+  "KBInfo": "KB3164674 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3 CU3",
+  "BuildNumber": "12.0.6259.0 (latest build)",
+  "KBInfo": "KB4491539",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3 CU2",
+  "BuildNumber": "12.0.6214.1",
+  "KBInfo": "KB4482960",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3 CU1",
+  "BuildNumber": "12.0.6205.1",
+  "KBInfo": "KB4470220",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3",
+  "BuildNumber": "12.0.6024.0",
+  "KBInfo": "KB4022619",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU17",
+  "BuildNumber": "12.0.5632.1 (latest build)",
+  "KBInfo": "KB4491540",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU16",
+  "BuildNumber": "12.0.5626.1",
+  "KBInfo": "KB4482967",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU15",
+  "BuildNumber": "12.0.5605.1",
+  "KBInfo": "KB4469137",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU14",
+  "BuildNumber": "12.0.5600.1",
+  "KBInfo": "KB4459860",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU13",
+  "BuildNumber": "12.0.5590.1",
+  "KBInfo": "KB4456287 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU12",
+  "BuildNumber": "12.0.5589.7",
+  "KBInfo": "KB4130489",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU11",
+  "BuildNumber": "12.0.5579.0",
+  "KBInfo": "KB4077063",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU10",
+  "BuildNumber": "12.0.5571.0",
+  "KBInfo": "KB4052725",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU9",
+  "BuildNumber": "12.0.5563.0",
+  "KBInfo": "KB4055557",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU8",
+  "BuildNumber": "12.0.5557.0",
+  "KBInfo": "KB4037356",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU7",
+  "BuildNumber": "12.0.5556.0",
+  "KBInfo": "KB4032541",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU6",
+  "BuildNumber": "12.0.5552.0",
+  "KBInfo": "KB4019094",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU5",
+  "BuildNumber": "12.0.5546.0",
+  "KBInfo": "KB4013098",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU4",
+  "BuildNumber": "12.0.5540.0",
+  "KBInfo": "KB4010394 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU3",
+  "BuildNumber": "12.0.5538.0",
+  "KBInfo": "KB3204388 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU2",
+  "BuildNumber": "12.0.5522.0",
+  "KBInfo": "KB3188778 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU1",
+  "BuildNumber": "12.0.5511.0",
+  "KBInfo": "KB3178925 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2",
+  "BuildNumber": "12.0.5000.0",
+  "KBInfo": "KB3171021 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU13",
+  "BuildNumber": "12.0.4520.0 (latest build)",
+  "KBInfo": "KB4019099",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU12",
+  "BuildNumber": "12.0.4511.0",
+  "KBInfo": "KB4017793",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU11",
+  "BuildNumber": "12.0.4502.0",
+  "KBInfo": "KB4010392 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU10",
+  "BuildNumber": "12.0.4491.0",
+  "KBInfo": "KB3204399 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU9",
+  "BuildNumber": "12.0.4474.0",
+  "KBInfo": "KB3186964 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU8",
+  "BuildNumber": "12.0.4468.0",
+  "KBInfo": "KB3174038 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU7",
+  "BuildNumber": "12.0.4459.0",
+  "KBInfo": "KB3162659 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU6",
+  "BuildNumber": "12.0.4457.0",
+  "KBInfo": "KB3167392 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU6 (Deprecated)",
+  "BuildNumber": "12.0.4449.0",
+  "KBInfo": "KB3144524 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU5",
+  "BuildNumber": "12.0.4439.1",
+  "KBInfo": "KB3130926 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU4",
+  "BuildNumber": "12.0.4436.0",
+  "KBInfo": "KB3106660 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU3",
+  "BuildNumber": "12.0.4427.24",
+  "KBInfo": "KB3094221 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU2",
+  "BuildNumber": "12.0.4422.0",
+  "KBInfo": "KB3075950 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU1",
+  "BuildNumber": "12.0.4416.1",
+  "KBInfo": "KB3067839 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1",
+  "BuildNumber": "12.0.4100.1",
+  "KBInfo": "KB3058865 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU14",
+  "BuildNumber": "12.0.2569.0 (latest build)",
+  "KBInfo": "KB3158271 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU13",
+  "BuildNumber": "12.0.2568.0",
+  "KBInfo": "KB3144517 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU12",
+  "BuildNumber": "12.0.2564.0",
+  "KBInfo": "KB3130923 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU11",
+  "BuildNumber": "12.0.2560.0",
+  "KBInfo": "KB3106659 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU10",
+  "BuildNumber": "12.0.2556.4",
+  "KBInfo": "KB3094220 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU9",
+  "BuildNumber": "12.0.2553.0",
+  "KBInfo": "KB3075949 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU8",
+  "BuildNumber": "12.0.2546.0",
+  "KBInfo": "KB3067836 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU7",
+  "BuildNumber": "12.0.2495.0",
+  "KBInfo": "KB3046038 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU6",
+  "BuildNumber": "12.0.2480.0",
+  "KBInfo": "KB3031047 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU5",
+  "BuildNumber": "12.0.2456.0",
+  "KBInfo": "KB3011055 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU4",
+  "BuildNumber": "12.0.2430.0",
+  "KBInfo": "KB2999197 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU3",
+  "BuildNumber": "12.0.2402.0",
+  "KBInfo": "KB2984923 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU2",
+  "BuildNumber": "12.0.2370.0",
+  "KBInfo": "KB2967546 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU1",
+  "BuildNumber": "12.0.2342.0",
+  "KBInfo": "KB2931693 ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3 CU3",
+  "BuildNumber": "12.0.6259.0 (latest build)",
+  "KBInfo": "KB4491539",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3 CU2",
+  "BuildNumber": "12.0.6214.1",
+  "KBInfo": "KB4482960",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3 CU1",
+  "BuildNumber": "12.0.6205.1",
+  "KBInfo": "KB4470220",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP3",
+  "Label": "SQL Server 2014 SP3",
+  "BuildNumber": "12.0.6024.0",
+  "KBInfo": "KB4022619",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU17",
+  "BuildNumber": "12.0.5632.1 (latest build)",
+  "KBInfo": "KB4491540",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU16",
+  "BuildNumber": "12.0.5626.1",
+  "KBInfo": "KB4482967",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU15",
+  "BuildNumber": "12.0.5605.1",
+  "KBInfo": "KB4469137",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU14",
+  "BuildNumber": "12.0.5600.1",
+  "KBInfo": "KB4459860",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU13",
+  "BuildNumber": "12.0.5590.1",
+  "KBInfo": "KB4456287 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU12",
+  "BuildNumber": "12.0.5589.7",
+  "KBInfo": "KB4130489",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU11",
+  "BuildNumber": "12.0.5579.0",
+  "KBInfo": "KB4077063",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU10",
+  "BuildNumber": "12.0.5571.0",
+  "KBInfo": "KB4052725",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU9",
+  "BuildNumber": "12.0.5563.0",
+  "KBInfo": "KB4055557",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU8",
+  "BuildNumber": "12.0.5557.0",
+  "KBInfo": "KB4037356",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU7",
+  "BuildNumber": "12.0.5556.0",
+  "KBInfo": "KB4032541",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU6",
+  "BuildNumber": "12.0.5552.0",
+  "KBInfo": "KB4019094",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU5",
+  "BuildNumber": "12.0.5546.0",
+  "KBInfo": "KB4013098",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU4",
+  "BuildNumber": "12.0.5540.0",
+  "KBInfo": "KB4010394 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU3",
+  "BuildNumber": "12.0.5538.0",
+  "KBInfo": "KB3204388 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU2",
+  "BuildNumber": "12.0.5522.0",
+  "KBInfo": "KB3188778 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2 CU1",
+  "BuildNumber": "12.0.5511.0",
+  "KBInfo": "KB3178925 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP2",
+  "Label": "SQL Server 2014 SP2",
+  "BuildNumber": "12.0.5000.0",
+  "KBInfo": "KB3171021 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU13",
+  "BuildNumber": "12.0.4520.0 (latest build)",
+  "KBInfo": "KB4019099",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU12",
+  "BuildNumber": "12.0.4511.0",
+  "KBInfo": "KB4017793",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU11",
+  "BuildNumber": "12.0.4502.0",
+  "KBInfo": "KB4010392 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU10",
+  "BuildNumber": "12.0.4491.0",
+  "KBInfo": "KB3204399 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU9",
+  "BuildNumber": "12.0.4474.0",
+  "KBInfo": "KB3186964 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU8",
+  "BuildNumber": "12.0.4468.0",
+  "KBInfo": "KB3174038 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU7",
+  "BuildNumber": "12.0.4459.0",
+  "KBInfo": "KB3162659 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU6",
+  "BuildNumber": "12.0.4457.0",
+  "KBInfo": "KB3167392 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU6 (Deprecated)",
+  "BuildNumber": "12.0.4449.0",
+  "KBInfo": "KB3144524 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU5",
+  "BuildNumber": "12.0.4439.1",
+  "KBInfo": "KB3130926 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU4",
+  "BuildNumber": "12.0.4436.0",
+  "KBInfo": "KB3106660 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU3",
+  "BuildNumber": "12.0.4427.24",
+  "KBInfo": "KB3094221 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU2",
+  "BuildNumber": "12.0.4422.0",
+  "KBInfo": "KB3075950 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1 CU1",
+  "BuildNumber": "12.0.4416.1",
+  "KBInfo": "KB3067839 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "SP1",
+  "Label": "SQL Server 2014 SP1",
+  "BuildNumber": "12.0.4100.1",
+  "KBInfo": "KB3058865 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU14",
+  "BuildNumber": "12.0.2569.0 (latest build)",
+  "KBInfo": "KB3158271 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU13",
+  "BuildNumber": "12.0.2568.0",
+  "KBInfo": "KB3144517 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU12",
+  "BuildNumber": "12.0.2564.0",
+  "KBInfo": "KB3130923 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU11",
+  "BuildNumber": "12.0.2560.0",
+  "KBInfo": "KB3106659 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU10",
+  "BuildNumber": "12.0.2556.4",
+  "KBInfo": "KB3094220 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU9",
+  "BuildNumber": "12.0.2553.0",
+  "KBInfo": "KB3075949 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU8",
+  "BuildNumber": "12.0.2546.0",
+  "KBInfo": "KB3067836 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU7",
+  "BuildNumber": "12.0.2495.0",
+  "KBInfo": "KB3046038 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU6",
+  "BuildNumber": "12.0.2480.0",
+  "KBInfo": "KB3031047 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU5",
+  "BuildNumber": "12.0.2456.0",
+  "KBInfo": "KB3011055 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU4",
+  "BuildNumber": "12.0.2430.0",
+  "KBInfo": "KB2999197 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU3",
+  "BuildNumber": "12.0.2402.0",
+  "KBInfo": "KB2984923 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU2",
+  "BuildNumber": "12.0.2370.0",
+  "KBInfo": "KB2967546 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2014",
+  "ProductLevel": "RTM",
+  "Label": "CU1",
+  "BuildNumber": "12.0.2342.0",
+  "KBInfo": "KB2931693 ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU10",
+  "BuildNumber": "11.0.6607.3 (latest build)",
+  "KBInfo": "4025925",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU9",
+  "BuildNumber": "11.0.6598.0",
+  "KBInfo": "4016762",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU8",
+  "BuildNumber": "11.0.6594.0",
+  "KBInfo": "4013104",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU7",
+  "BuildNumber": "11.0.6579.0",
+  "KBInfo": "3205051",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU6",
+  "BuildNumber": "11.0.6567.0",
+  "KBInfo": "3194992",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU5",
+  "BuildNumber": "11.0.6544.0",
+  "KBInfo": "3180915",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU4",
+  "BuildNumber": "11.0.6540.0",
+  "KBInfo": "3165264",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU3",
+  "BuildNumber": "11.0.6537.0",
+  "KBInfo": "3152635",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU2 ",
+  "BuildNumber": "11.0.6523.0 ",
+  "KBInfo": "3137746  ",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU1",
+  "BuildNumber": "11.0.6518.0",
+  "KBInfo": "3123299",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU16 ",
+  "BuildNumber": "11.0.5678.0",
+  "KBInfo": "3205054",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU15 ",
+  "BuildNumber": "11.0.5676.0 (Latest build)",
+  "KBInfo": "3205416",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU14",
+  "BuildNumber": "11.0.5657.0",
+  "KBInfo": "3180914",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU13",
+  "BuildNumber": "11.0.5655.0",
+  "KBInfo": "3165266",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU12 ",
+  "BuildNumber": "11.0.5649.0",
+  "KBInfo": "3152637",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU11 ",
+  "BuildNumber": "11.0.5646.0 ",
+  "KBInfo": "3137745",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU10",
+  "BuildNumber": "11.0.5644.2 ",
+  "KBInfo": "3120313",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU9",
+  "BuildNumber": "11.0.5641.0",
+  "KBInfo": "3098512",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU8",
+  "BuildNumber": "11.0.5634.1",
+  "KBInfo": "3082561",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU7",
+  "BuildNumber": "11.0.5623.0",
+  "KBInfo": "3072100",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU6",
+  "BuildNumber": "11.0.5592.0",
+  "KBInfo": "3052468",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU5",
+  "BuildNumber": "11.0.5582.0",
+  "KBInfo": "3037255",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU4",
+  "BuildNumber": "11.0.5569.0",
+  "KBInfo": "3007556",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU3",
+  "BuildNumber": "11.0.5556.0",
+  "KBInfo": "3002049",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU2",
+  "BuildNumber": "11.0.5548.0",
+  "KBInfo": "2983175",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU1",
+  "BuildNumber": "11.0.5532.0",
+  "KBInfo": "2976982",
+  "PDBUrls": [
+  ], "MachineType" :"x64"
+}
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU10",
+  "BuildNumber": "11.0.6607.3 (latest build)",
+  "KBInfo": "4025925",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU9",
+  "BuildNumber": "11.0.6598.0",
+  "KBInfo": "4016762",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU8",
+  "BuildNumber": "11.0.6594.0",
+  "KBInfo": "4013104",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU7",
+  "BuildNumber": "11.0.6579.0",
+  "KBInfo": "3205051",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU6",
+  "BuildNumber": "11.0.6567.0",
+  "KBInfo": "3194992",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU5",
+  "BuildNumber": "11.0.6544.0",
+  "KBInfo": "3180915",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU4",
+  "BuildNumber": "11.0.6540.0",
+  "KBInfo": "3165264",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU3",
+  "BuildNumber": "11.0.6537.0",
+  "KBInfo": "3152635",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU2 ",
+  "BuildNumber": "11.0.6523.0 ",
+  "KBInfo": "3137746  ",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP3",
+  "Label": "CU1",
+  "BuildNumber": "11.0.6518.0",
+  "KBInfo": "3123299",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+
+
+
+
+
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU16 ",
+  "BuildNumber": "11.0.5678.0",
+  "KBInfo": "3205054",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU15 ",
+  "BuildNumber": "11.0.5676.0 (Latest build)",
+  "KBInfo": "3205416",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU14",
+  "BuildNumber": "11.0.5657.0",
+  "KBInfo": "3180914",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU13",
+  "BuildNumber": "11.0.5655.0",
+  "KBInfo": "3165266",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU12 ",
+  "BuildNumber": "11.0.5649.0",
+  "KBInfo": "3152637",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU11 ",
+  "BuildNumber": "11.0.5646.0 ",
+  "KBInfo": "3137745",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU10",
+  "BuildNumber": "11.0.5644.2 ",
+  "KBInfo": "3120313",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU9",
+  "BuildNumber": "11.0.5641.0",
+  "KBInfo": "3098512",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU8",
+  "BuildNumber": "11.0.5634.1",
+  "KBInfo": "3082561",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU7",
+  "BuildNumber": "11.0.5623.0",
+  "KBInfo": "3072100",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU6",
+  "BuildNumber": "11.0.5592.0",
+  "KBInfo": "3052468",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU5",
+  "BuildNumber": "11.0.5582.0",
+  "KBInfo": "3037255",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU4",
+  "BuildNumber": "11.0.5569.0",
+  "KBInfo": "3007556",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU3",
+  "BuildNumber": "11.0.5556.0",
+  "KBInfo": "3002049",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU2",
+  "BuildNumber": "11.0.5548.0",
+  "KBInfo": "2983175",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
+}
+{
+  "ProductMajorVersion": "SQL Server 2012",
+  "ProductLevel": "SP2",
+  "Label": "CU1",
+  "BuildNumber": "11.0.5532.0",
+  "KBInfo": "2976982",
+  "PDBUrls": [
+  ], "MachineType" :"x86"
 }

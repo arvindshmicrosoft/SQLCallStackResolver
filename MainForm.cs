@@ -247,7 +247,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (res == DialogResult.OK)
             {
-                
+                this.pdbPaths.AppendText(sqlbuildsForm.pathToPDBs);
             }
             else
             {
