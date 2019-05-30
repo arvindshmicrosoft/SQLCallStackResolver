@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SQLCallStackResolver.Properties {
+namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

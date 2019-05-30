@@ -51,9 +51,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Engine\SQLCallStackResolver.Engine.csproj">
+    <ProjectReference Include="..\Engine\SQLCallstackResolver.Engine.csproj">
       <Project>{782bbd60-ee45-43cd-8a4f-0505efe4ff1a}</Project>
-      <Name>SQLCallStackResolver.Engine</Name>
+      <Name>SQLCallstackResolver.Engine</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

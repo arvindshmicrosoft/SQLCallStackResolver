@@ -900,7 +900,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="dllSearchPath"></param>
         /// <param name="recurse"></param>
         /// <returns></returns>
-        public string ObtainPDBDownloadCommandsfromDLL(string dllSearchPath, bool recurse)
+        public string ObtainPDBDownloadCommandsfromDLL(string dllSearchPath, bool recurse, bool getJSON)
         {
             if (string.IsNullOrEmpty(dllSearchPath))
             {
@@ -911,7 +911,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             var finalCommand = new StringBuilder();
 
-            finalCommand.AppendLine("\tNew-Item -Type Directory -Path <somepath> -ErrorAction SilentlyContinue");
+            if (!getJSON)
+            {
+                finalCommand.AppendLine("\tNew-Item -Type Directory -Path <somepath> -ErrorAction SilentlyContinue");
+            }
+            else
+            {
+                finalCommand.AppendLine("'files':[");
+            }
 
             foreach (var currentModule in moduleNames)
             {
@@ -944,15 +951,29 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             var signaturePlusAge = pdbGuid.ToString("N") + pdbAge.ToString();
                             var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
 
-                            finalCommand.Append("\t");
-                            finalCommand.AppendFormat(@"Invoke-WebRequest -uri 'https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb' -OutFile '<somepath>\{0}.pdb' # File version {2}", pdbName, signaturePlusAge, fileVersion);
-                            finalCommand.AppendLine();
+                            var downloadUri = string.Format(@"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb", pdbName, signaturePlusAge);
+
+                            if (!getJSON)
+                            {
+                                finalCommand.Append("\t");
+                                finalCommand.AppendFormat(@"Invoke-WebRequest -uri '{0}' -OutFile '<somepath>\{1}.pdb' # File version {2}", downloadUri, pdbName, fileVersion);
+                                finalCommand.AppendLine();
+                            }
+                            else
+                            {
+                                finalCommand.AppendFormat("'{0}',", downloadUri);
+                            }
                         }
                     }
                 }
             }
 
-            return finalCommand.ToString();
+            if (getJSON)
+            {
+                finalCommand.AppendLine("]");
+            }
+
+            return finalCommand.ToString().Replace(",]", "]").Replace("'", "\"");
         }
     }
 

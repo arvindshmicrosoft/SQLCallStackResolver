@@ -70,6 +70,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return;
             }
 
+            this.ShowStatus("Resolving callstacks; please wait. This may take a while!");
+
             finalOutput.Text = this._resolver.ResolveCallstacks(callStackInput.Text,
                 pdbPaths.Text,
                 pdbRecurse.Checked,
@@ -80,11 +82,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 RelookupSource.Checked,
                 includeOffsets.Checked
                 );
+
+            this.ShowStatus(string.Empty);
         }
 
         private void EnterBaseAddresses_Click(object sender, EventArgs e)
         {
-            var baseAddressForm = new MultilineInput(this._baseAddressesString);
+            var baseAddressForm = new MultilineInput(this._baseAddressesString, true);
             DialogResult res = baseAddressForm.ShowDialog(this);
 
             if (res == DialogResult.OK)
@@ -115,15 +119,27 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void GetPDBDnldScript_Click(object sender, EventArgs e)
         {
-            var finalCmds = this._resolver.ObtainPDBDownloadCommandsfromDLL(binaryPaths.Text, DLLrecurse.Checked);
+            this.ShowStatus("Getting PDB download script... please wait. This may take a while!");
+
+            var finalCmds = this._resolver.ObtainPDBDownloadCommandsfromDLL(binaryPaths.Text,
+                DLLrecurse.Checked,
+                false);
 
             if (string.IsNullOrEmpty(finalCmds))
             {
                 return;
             }
 
-            var outputCmds = new MultilineInput(finalCmds);
+            this.ShowStatus(string.Empty);
+
+            var outputCmds = new MultilineInput(finalCmds, false);
             outputCmds.ShowDialog(this);
+        }
+
+        private void ShowStatus(string txt)
+        {
+            this.statusLabel.Text = txt;
+            Application.DoEvents();
         }
 
         private void LoadXELButton_Click(object sender, EventArgs e)
@@ -139,7 +155,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (res != DialogResult.Cancel)
             {
+                this.ShowStatus("Loading from XEL files; please wait. This may take a while!");
+
                 callStackInput.Text = this._resolver.ExtractFromXEL(genericOpenFileDlg.FileNames, BucketizeXEL.Checked);
+
+                this.ShowStatus(string.Empty);
             }
         }
 
@@ -158,7 +178,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     // if there is any other format in between, it will be rejected by the ExtractFromXEL code
                     if (Path.GetExtension(files[0]).ToLower() == ".xel")
                     {
+                        this.ShowStatus("XEL file was dragged; please wait while we extract events from the file");
+
                         allFilesContent.AppendLine(this._resolver.ExtractFromXEL(files, BucketizeXEL.Checked));
+
+                        this.ShowStatus(string.Empty);
                     }
                     else
                     {
@@ -213,6 +237,21 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             if (res != DialogResult.Cancel)
             {
                 binaryPaths.AppendText((binaryPaths.TextLength == 0 ? string.Empty : ";") + Path.GetDirectoryName(genericOpenFileDlg.FileName));
+            }
+        }
+
+        private void SelectSQLPDB_Click(object sender, EventArgs e)
+        {
+            var sqlbuildsForm = new SQLBuildsForm();
+            DialogResult res = sqlbuildsForm.ShowDialog(this);
+
+            if (res == DialogResult.OK)
+            {
+                
+            }
+            else
+            {
+                return;
             }
         }
     }

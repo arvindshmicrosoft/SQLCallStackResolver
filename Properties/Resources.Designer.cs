@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SQLCallStackResolver.Properties {
+namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace SQLCallStackResolver.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SQLCallStackResolver.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

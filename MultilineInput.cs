@@ -39,12 +39,21 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
     public partial class MultilineInput : Form
     {
-        public MultilineInput(string initialtext)
+        public MultilineInput(string initialtext, bool showFilepicker)
         {
             InitializeComponent();
             if (!string.IsNullOrEmpty(initialtext))
             {
                 this.InputAddresses.Text = initialtext;
+            }
+
+            if (showFilepicker)
+            {
+                loadFromFile.Visible = true;
+            }
+            else
+            {
+                loadFromFile.Visible = false;
             }
         }
 
@@ -90,6 +99,23 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 e.Effect = DragDropEffects.Copy;
             else
                 e.Effect = DragDropEffects.None;
+        }
+
+        private void loadFromFile_Click(object sender, System.EventArgs e)
+        {
+            fileDlg.Multiselect = false;
+            fileDlg.CheckPathExists = true;
+            fileDlg.CheckFileExists = true;
+            fileDlg.FileName = string.Empty;
+            fileDlg.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            fileDlg.Title = "Select file";
+
+            var res = fileDlg.ShowDialog(this);
+
+            if (res != DialogResult.Cancel)
+            {
+                InputAddresses.Text = File.ReadAllText(fileDlg.FileName);
+            }
         }
     }
 }
