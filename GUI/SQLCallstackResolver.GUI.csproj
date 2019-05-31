@@ -19,8 +19,8 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>Target\Debug\</OutputPath>
-    <BaseIntermediateOutputPath>Target\</BaseIntermediateOutputPath>
+    <OutputPath>..\Target\Debug\</OutputPath>
+    <BaseIntermediateOutputPath>..\Target\</BaseIntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -31,8 +31,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>Target\Release\</OutputPath>
-    <BaseIntermediateOutputPath>Target\</BaseIntermediateOutputPath>
+    <OutputPath>..\Target\Release\</OutputPath>
+    <BaseIntermediateOutputPath>..\Target\</BaseIntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -107,7 +107,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Engine\SQLCallstackResolver.Engine.csproj">
+    <ProjectReference Include="..\Engine\SQLCallstackResolver.Engine.csproj">
       <Project>{782bbd60-ee45-43cd-8a4f-0505efe4ff1a}</Project>
       <Name>SQLCallstackResolver.Engine</Name>
     </ProjectReference>
