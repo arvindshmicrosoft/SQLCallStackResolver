@@ -45,6 +45,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     var blds = (from SQLBuildInfo b in allBuilds.Values
                                       where b.ProductMajorVersion == ver && b.ProductLevel == pl
+                                      && b.PDBUrls.Count > 0
                                       select b).Distinct().OrderByDescending(b => b.BuildNumber);
 
                     treeView1.Nodes[ver].Nodes[pl].Nodes.AddRange(blds.Select(bld => new TreeNode(bld.ToString()) { Name = bld.ToString(), Tag = MagicTagForBuilds }).ToArray());
