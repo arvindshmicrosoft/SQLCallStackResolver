@@ -243,16 +243,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private void SelectSQLPDB_Click(object sender, EventArgs e)
         {
             var sqlbuildsForm = new SQLBuildsForm();
+            sqlbuildsForm.pathToPDBs = System.Configuration.ConfigurationManager.AppSettings["PDBDownloadFolder"];
             DialogResult res = sqlbuildsForm.ShowDialog(this);
 
-            if (res == DialogResult.OK)
-            {
-                this.pdbPaths.AppendText(sqlbuildsForm.pathToPDBs);
-            }
-            else
-            {
-                return;
-            }
+            this.pdbPaths.AppendText(sqlbuildsForm.pathToPDBs);
         }
     }
 }
