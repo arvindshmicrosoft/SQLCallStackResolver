@@ -26,7 +26,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void Treeview_Load(object sender, EventArgs e)
         {
-            var allBuilds = SQLBuildInfo.GetSqlBuildInfo(@"C:\workarea\SQLCallStackResolver\sqlbuildinfo.json");
+            var allBuilds = SQLBuildInfo.GetSqlBuildInfo(@"sqlbuildinfo.json");
 
             // top-level is major versions
             var sqlMajorVersions = (from SQLBuildInfo b in allBuilds.Values

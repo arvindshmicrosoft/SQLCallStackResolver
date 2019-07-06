@@ -440,6 +440,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.Name = "MainForm";
             this.Text = "SQLCallstackResolver (http://aka.ms/sqlstack)";
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.splitContainer2.Panel1.ResumeLayout(false);
             this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();

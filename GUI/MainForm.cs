@@ -38,6 +38,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System.Windows.Forms;
     using System.Text;
     using System.IO;
+    using System.Net;
+    using System.Globalization;
 
     public partial class MainForm : Form
     {
@@ -242,11 +244,59 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void SelectSQLPDB_Click(object sender, EventArgs e)
         {
-            var sqlbuildsForm = new SQLBuildsForm();
-            sqlbuildsForm.pathToPDBs = System.Configuration.ConfigurationManager.AppSettings["PDBDownloadFolder"];
+            var sqlbuildsForm = new SQLBuildsForm
+            {
+                pathToPDBs = System.Configuration.ConfigurationManager.AppSettings["PDBDownloadFolder"]
+            };
+
             DialogResult res = sqlbuildsForm.ShowDialog(this);
 
             this.pdbPaths.AppendText(sqlbuildsForm.pathToPDBs);
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            // get the timestamp of the local sqlbuildinfo.json file
+            var localBuildInfoFile = new FileInfo(@"sqlbuildinfo.json");
+
+            DateTime lastUpdDateTime = DateTime.MinValue;
+
+            var sqlBuildInfoUpdateURLs = System.Configuration.ConfigurationManager.AppSettings["SQLBuildInfoUpdateURLs"].Split(';');
+
+            // get the timestamp of the first valid file within SQLBuildInfoURLs
+            foreach (var url in sqlBuildInfoUpdateURLs)
+            {
+                HttpWebResponse httpResp = null;
+                var httpReq = (HttpWebRequest) WebRequest.Create(url);
+
+                try
+                {
+                    httpResp = (HttpWebResponse)httpReq.GetResponse();
+                }
+                catch(WebException)
+                {
+                }
+
+                if (httpResp != null)
+                {
+                    if (httpResp.StatusCode == HttpStatusCode.OK)
+                    {
+                        using (var strm = new StreamReader(httpResp.GetResponseStream()))
+                        {
+                            string lastUpd = strm.ReadToEnd();
+                            lastUpdDateTime = DateTime.ParseExact(lastUpd, "yyyy-MM-dd HH:mm", new CultureInfo("en-US"));
+                        }
+                        
+                        if (lastUpdDateTime > localBuildInfoFile.LastWriteTime)
+                        {
+                            // if the server timestamp > local timestamp, prompt to download
+                            MessageBox.Show($"{url} was updated recently. Do you wish to download it?");
+                        }
+
+                        break;
+                    }
+                }
+            }
         }
     }
 }

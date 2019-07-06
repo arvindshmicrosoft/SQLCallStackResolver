@@ -43,6 +43,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -93,6 +94,10 @@
     <EmbeddedResource Include="SQLBuildsForm.resx">
       <DependentUpon>SQLBuildsForm.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="..\sqlbuildinfo.json">
+      <Link>sqlbuildinfo.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
