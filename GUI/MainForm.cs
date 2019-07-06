@@ -50,6 +50,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private StackResolver _resolver = new StackResolver();
         private string _baseAddressesString = null;
+        internal static string SqlBuildInfoFileName = @"sqlbuildinfo.json";
 
         private void ResolveCallstacks_Click(object sender, EventArgs e)
         {
@@ -257,11 +258,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private void MainForm_Load(object sender, EventArgs e)
         {
             // get the timestamp of the local sqlbuildinfo.json file
-            var localBuildInfoFile = new FileInfo(@"sqlbuildinfo.json");
+            var localBuildInfoFile = new FileInfo(SqlBuildInfoFileName);
 
             DateTime lastUpdDateTime = DateTime.MinValue;
 
             var sqlBuildInfoUpdateURLs = System.Configuration.ConfigurationManager.AppSettings["SQLBuildInfoUpdateURLs"].Split(';');
+            var sqlBuildInfoURLs = System.Configuration.ConfigurationManager.AppSettings["SQLBuildInfoURLs"].Split(';');
 
             // get the timestamp of the first valid file within SQLBuildInfoURLs
             foreach (var url in sqlBuildInfoUpdateURLs)
@@ -286,11 +288,60 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             string lastUpd = strm.ReadToEnd();
                             lastUpdDateTime = DateTime.ParseExact(lastUpd, "yyyy-MM-dd HH:mm", new CultureInfo("en-US"));
                         }
-                        
-                        if (lastUpdDateTime > localBuildInfoFile.LastWriteTime)
+
+                        if (lastUpdDateTime > localBuildInfoFile.LastWriteTimeUtc)
                         {
                             // if the server timestamp > local timestamp, prompt to download
-                            MessageBox.Show($"{url} was updated recently. Do you wish to download it?");
+                            var res = MessageBox.Show(this,
+                                "The SQLBuildInfo.json file was updated recently on GitHub. Do you wish to update your copy with the newer version?",
+                                "SQL Build info updated",
+                                MessageBoxButtons.YesNo);
+
+                            if (DialogResult.Yes == res)
+                            {
+                                foreach (var jsonURL in sqlBuildInfoURLs)
+                                {
+                                    httpResp = null;
+                                    httpReq = (HttpWebRequest)WebRequest.Create(jsonURL);
+
+                                    try
+                                    {
+                                        httpResp = (HttpWebResponse)httpReq.GetResponse();
+                                    }
+                                    catch (WebException)
+                                    {
+                                    }
+
+                                    if (httpResp != null)
+                                    {
+                                        if (httpResp.StatusCode == HttpStatusCode.OK)
+                                        {
+                                            try
+                                            {
+                                                using (var strm = new StreamReader(httpResp.GetResponseStream()))
+                                                {
+                                                    var jsonContent = strm.ReadToEnd();
+
+                                                    using (var writer = new StreamWriter(SqlBuildInfoFileName))
+                                                    {
+                                                        writer.Write(jsonContent);
+                                                        writer.Flush();
+                                                        writer.Close();
+                                                    }
+                                                }
+                                            }
+                                            catch(WebException)
+                                            {
+                                                MessageBox.Show(this,
+                                                    "Could not download SQL Build Info file due to HTTP errors.",
+                                                    "Error",
+                                                    MessageBoxButtons.OK,
+                                                    MessageBoxIcon.Error);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         break;
