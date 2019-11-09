@@ -34,6 +34,7 @@
             this.downloadProgress = new System.Windows.Forms.ToolStripProgressBar();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.dnldButton = new System.Windows.Forms.Button();
+            this.checkPDBAvail = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -86,6 +87,7 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.checkPDBAvail);
             this.splitContainer1.Panel2.Controls.Add(this.dnldButton);
             this.splitContainer1.Size = new System.Drawing.Size(548, 669);
             this.splitContainer1.SplitterDistance = 598;
@@ -94,13 +96,24 @@
             // dnldButton
             // 
             this.dnldButton.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.dnldButton.Location = new System.Drawing.Point(180, 8);
+            this.dnldButton.Location = new System.Drawing.Point(265, 8);
             this.dnldButton.Name = "dnldButton";
             this.dnldButton.Size = new System.Drawing.Size(189, 32);
             this.dnldButton.TabIndex = 2;
             this.dnldButton.Text = "Download PDBs";
             this.dnldButton.UseVisualStyleBackColor = true;
             this.dnldButton.Click += new System.EventHandler(this.DownloadPDBs);
+            // 
+            // checkPDBAvail
+            // 
+            this.checkPDBAvail.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.checkPDBAvail.Location = new System.Drawing.Point(88, 8);
+            this.checkPDBAvail.Name = "checkPDBAvail";
+            this.checkPDBAvail.Size = new System.Drawing.Size(171, 32);
+            this.checkPDBAvail.TabIndex = 3;
+            this.checkPDBAvail.Text = "Check PDB availability";
+            this.checkPDBAvail.UseVisualStyleBackColor = true;
+            this.checkPDBAvail.Click += new System.EventHandler(this.checkPDBAvail_Click);
             // 
             // SQLBuildsForm
             // 
@@ -135,5 +148,6 @@
         private System.Windows.Forms.ToolStripProgressBar downloadProgress;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Button dnldButton;
+        private System.Windows.Forms.Button checkPDBAvail;
     }
 }

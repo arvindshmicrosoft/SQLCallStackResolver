@@ -1,8 +1,7 @@
 ﻿//------------------------------------------------------------------------------
-//<copyright company="Microsoft">
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2017 Microsoft
+//    Copyright (c) 2019 Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +27,6 @@
 //    be liable for any damages whatsoever (including, without limitation, damages for loss of business profits,
 //    business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
-//</copyright>
 //------------------------------------------------------------------------------
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
@@ -716,7 +714,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="rootPaths"></param>
         /// <param name="recurse"></param>
         /// <param name="moduleNames"></param>
-        private void LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames)
+        private bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames)
         {
             // loop through each module, trying to find matched PDB files
             var splitRootPaths = rootPaths.Split(';');
@@ -731,13 +729,26 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
                             if (foundFiles.Count() > 0)
                             {
-                                _diautils.Add(currentModule, new DiaUtil(foundFiles.First()));
+                                DiaUtil localDIA = null;
+
+                                try
+                                {
+                                    localDIA = new DiaUtil(foundFiles.First());
+                                }
+                                catch(COMException)
+                                {
+                                    return false;
+                                }
+
+                                _diautils.Add(currentModule, localDIA);
                                 break;
                             }
                         }
                     }
                 }
             }
+
+            return true;
         }
 
         /// <summary>
@@ -865,14 +876,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 callStackLines = PreProcessVAs(callStackLines);
 
                 // locate the PDBs and populate their DIA session helper classes
-                LocateandLoadPDBs(_diautils, symPath, searchPDBsRecursively, EnumModuleNames(callStackLines));
-
-                // resolve symbols by using DIA
-                currstack.Resolvedstack = ResolveSymbols(_diautils, 
-                    callStackLines, 
-                    includeSourceInfo,
-                    relookupSource,
-                    includeOffsets);
+                if (LocateandLoadPDBs(_diautils, symPath, searchPDBsRecursively, EnumModuleNames(callStackLines)))
+                {
+                    // resolve symbols by using DIA
+                    currstack.Resolvedstack = ResolveSymbols(_diautils,
+                        callStackLines,
+                        includeSourceInfo,
+                        relookupSource,
+                        includeOffsets);
+                }
+                else
+                {
+                    currstack.Resolvedstack = string.Empty;
+                }
 
                 // cleanup any older COM objects
                 if (_diautils != null)
@@ -888,7 +904,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // populate the output
             foreach (var currstack in listOfCallStacks)
             {
-                finalCallstack.AppendLine(currstack.Resolvedstack);
+                if (!string.IsNullOrEmpty(currstack.Resolvedstack))
+                {
+                    finalCallstack.AppendLine(currstack.Resolvedstack);
+                }
+                else
+                {
+                    finalCallstack = new StringBuilder("Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
+                }
             }
 
             return finalCallstack.ToString();
