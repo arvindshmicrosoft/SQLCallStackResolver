@@ -1,6 +1,10 @@
 # Installation
 Please refer to the Releases section for a ready-to-run set of binaries. As of release 1.5 there is no external installation required other than .NET Framework 4.6.1 or above. We now include the [msdia140.dll](https://blogs.msdn.microsoft.com/calvin_hsia/2016/07/30/whats-in-a-pdb-file-use-the-debug-interface-access-sdk/) and [XELite](https://www.nuget.org/packages/Microsoft.SqlServer.XEvent.XELite/) as part of the ZIP file with the rest of the binaries.
 
+It may be necessary to register the msdia140.dll which is included in the ZIP to prevent .NET exceptions when running the tool. To do this, open an administrative command prompt and use <a href="https://support.microsoft.com/en-us/help/249873/how-to-use-the-regsvr32-tool-and-troubleshoot-regsvr32-error-messages/"> regsvr32 </a> to register this specific DLL such as:
+
+	regsvr32 "C:\Tools\SQLCallstackResolver\SQLCallStackResolver.1.5\msdia140.dll"
+	
 # Usage
 The tool comes with some pre-populated examples in the textboxes, just follow that example with your real-world stack(s).
 
