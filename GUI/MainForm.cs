@@ -123,18 +123,30 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             this.ShowStatus("Getting PDB download script... please wait. This may take a while!");
 
-            var finalCmds = this._resolver.ObtainPDBDownloadCommandsfromDLL(binaryPaths.Text,
-                DLLrecurse.Checked,
-                false);
+            var symDetails = this._resolver.GetSymbolDetailsForBinaries(binaryPaths.Text,
+                DLLrecurse.Checked);
 
-            if (string.IsNullOrEmpty(finalCmds))
+            if (0 == symDetails.Count)
             {
                 return;
             }
 
+            StringBuilder downloadCmds = new StringBuilder();
+            downloadCmds.AppendLine("\tNew-Item -Type Directory -Path <somepath> -ErrorAction SilentlyContinue");
+
+            foreach (var sym in symDetails)
+            {
+                downloadCmds.Append("\t");
+                downloadCmds.AppendFormat(@"Invoke-WebRequest -uri '{0}' -OutFile '<somepath>\{1}.pdb' # File version {2}",
+                    sym.DownloadURL,
+                    sym.PDBName,
+                    sym.FileVersion);
+                downloadCmds.AppendLine();
+            }
+
             this.ShowStatus(string.Empty);
 
-            var outputCmds = new MultilineInput(finalCmds, false);
+            var outputCmds = new MultilineInput(downloadCmds.ToString(), false);
             outputCmds.ShowDialog(this);
         }
 

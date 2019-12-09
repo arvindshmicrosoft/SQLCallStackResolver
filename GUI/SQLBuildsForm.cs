@@ -63,7 +63,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var sqlMajorVersions = (from SQLBuildInfo b in allBuilds.Values
                                    select b.ProductMajorVersion).Distinct();
 
-            treeView1.Nodes.AddRange(sqlMajorVersions.Select(b => new TreeNode(b) { Name = b } ).ToArray());
+            treeviewSyms.Nodes.AddRange(sqlMajorVersions.Select(b => new TreeNode(b) { Name = b } ).ToArray());
 
             // within each major version, get product levels (RTM, SP1 etc.)
             foreach(var ver in sqlMajorVersions)
@@ -72,41 +72,41 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                   where b.ProductMajorVersion == ver
                                   select b.ProductLevel).Distinct();
 
-                treeView1.Nodes[ver].Nodes.AddRange(prodLevels.Select(pl => new TreeNode(pl) { Name = pl } ).ToArray());
+                treeviewSyms.Nodes[ver].Nodes.AddRange(prodLevels.Select(pl => new TreeNode(pl) { Name = pl } ).ToArray());
 
                 // finally within each product level get the individual builds
                 foreach (var pl in prodLevels)
                 {
                     var blds = (from SQLBuildInfo b in allBuilds.Values
                                       where b.ProductMajorVersion == ver && b.ProductLevel == pl
-                                      && b.PDBUrls.Count > 0
+                                      && b.SymbolDetails.Count > 0
                                       select b).Distinct().OrderByDescending(b => b.BuildNumber);
 
-                    treeView1.Nodes[ver].Nodes[pl].Nodes.AddRange(blds.Select(bld => new TreeNode(bld.ToString()) { Name = bld.ToString(), Tag = bld }).ToArray());
+                    treeviewSyms.Nodes[ver].Nodes[pl].Nodes.AddRange(blds.Select(bld => new TreeNode(bld.ToString()) { Name = bld.ToString(), Tag = bld }).ToArray());
                 }
             }
         }
 
         private void DownloadPDBs(object sender, EventArgs e)
         {
-            var bld = treeView1.SelectedNode.Tag as SQLBuildInfo;
-
-            if (bld != null)
+            if (treeviewSyms.SelectedNode.Tag is SQLBuildInfo bld)
             {
                 // MessageBox.Show(treeView1.SelectedNode.Name + string.Join(",", bld.PDBUrls));
 
-                if (bld.PDBUrls.Count > 0)
+                if (bld.SymbolDetails.Count > 0)
                 {
                     dnldButton.Enabled = false;
 
                     Directory.CreateDirectory($@"{pathToPDBs}\{bld.BuildNumber}");
                     using (var client = new WebClient())
                     {
-                        client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(client_DownloadProgressChanged);
-                        client.DownloadFileCompleted += new AsyncCompletedEventHandler(client_DownloadFileCompleted);
+                        client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(Client_DownloadProgressChanged);
+                        client.DownloadFileCompleted += new AsyncCompletedEventHandler(Client_DownloadFileCompleted);
 
-                        foreach (var url in bld.PDBUrls)
+                        foreach (var sym in bld.SymbolDetails)
                         {
+                            var url = sym.DownloadURL;
+
                             if (!string.IsNullOrEmpty(url))
                             {
                                 var uri = new Uri(url);
@@ -132,7 +132,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
         }
 
-        void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
             double bytesIn = double.Parse(e.BytesReceived.ToString());
             double totalBytes = double.Parse(e.TotalBytesToReceive.ToString());
@@ -141,25 +141,25 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             statusStrip1.Refresh();
         }
 
-        void client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
+        void Client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
             downloadProgress.ProgressBar.Value = 0;
             statusStrip1.Refresh();
             activeDownload = false;
         }
 
-        private void checkPDBAvail_Click(object sender, EventArgs e)
+        private void CheckPDBAvail_Click(object sender, EventArgs e)
         {
-            var bld = treeView1.SelectedNode.Tag as SQLBuildInfo;
-
-            if (bld != null)
+            if (treeviewSyms.SelectedNode.Tag is SQLBuildInfo bld)
             {
-                if (bld.PDBUrls.Count > 0)
+                if (bld.SymbolDetails.Count > 0)
                 {
                     List<string> failedUrls = new List<string>();
 
-                    foreach (var url in bld.PDBUrls)
+                    foreach (var sym in bld.SymbolDetails)
                     {
+                        var url = sym.DownloadURL;
+
                         if (!string.IsNullOrEmpty(url))
                         {
                             var uri = new Uri(url);

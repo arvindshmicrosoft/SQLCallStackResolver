@@ -29,16 +29,12 @@
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
 //------------------------------------------------------------------------------
 
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
+    using Newtonsoft.Json;
+    using System.Collections.Generic;
+    using System.IO;
+
     public class SQLBuildInfo
     {
         public string ProductMajorVersion;
@@ -51,7 +47,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public string KBInfo;
 
-        public List<string> PDBUrls;
+        public List<Symbol> SymbolDetails;
 
         public string MachineType;
 
@@ -112,13 +108,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     wrtr.WriteLine(JsonConvert.SerializeObject(bld));
                 }
-
-                //using (var jsonWrtr = new JsonTextWriter(wrtr))
-                //{
-                //    var serializer = new JsonSerializer();
-
-                //    serializer.Serialize(jsonWrtr, allBuilds);
-                //}
             }
         }
     }

@@ -31,59 +31,17 @@
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
-    using System;
+    using Newtonsoft.Json;
 
-    class Program
+    public class Symbol
     {
-        static void Main(string[] args)
-        {
-            if (!TestBlockResolution())
-                Console.WriteLine("FAIL: TestBlockResolution");
-            else
-                Console.WriteLine("PASS: TestBlockResolution");
+        public string PDBName;
 
-            if (!TestOrdinal())
-                Console.WriteLine("FAIL: TestOrdinal");
-            else
-                Console.WriteLine("PASS: TestOrdinal");
+        [JsonIgnore]
+        public string InternalPDBName;
 
-        }
+        public string DownloadURL;
 
-        private static bool TestBlockResolution()
-        {
-            var csr = new StackResolver();
-            var ret = csr.ResolveCallstacks("Return Addr: 00007FF830D4CDA4 Module(KERNELBASE+000000000009CDA4)",
-                @"..\..\Tests\TestCases\TestBlockResolution",
-                false,
-                null,
-                false,
-                false,
-                false,
-                false,
-                true);
-
-            return ret.Trim() == "KERNELBASE!SignalObjectAndWait+147716";
-        }
-
-        private static bool TestOrdinal()
-        {
-            var csr = new StackResolver();
-            var dllPaths = new System.Collections.Generic.List<string>
-            {
-                @"..\..\Tests\TestCases\TestOrdinal"
-            };
-
-            var ret = csr.ResolveCallstacks("sqldk!Ordinal298+00000000000004A5",
-                @"..\..\Tests\TestCases\TestOrdinal",
-                false,
-                dllPaths,
-                false,
-                false,
-                false,
-                false,
-                true);
-
-            return ret.Trim() == "sqldk!SOS_Scheduler::SwitchContext+941";
-        }
+        public string FileVersion;
     }
 }

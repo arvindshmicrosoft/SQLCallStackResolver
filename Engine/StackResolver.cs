@@ -923,25 +923,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="dllSearchPath"></param>
         /// <param name="recurse"></param>
         /// <returns></returns>
-        public string ObtainPDBDownloadCommandsfromDLL(string dllSearchPath, bool recurse, bool getJSON)
+        public List<Symbol> GetSymbolDetailsForBinaries(string dllSearchPath, bool recurse)
         {
             if (string.IsNullOrEmpty(dllSearchPath))
             {
                 return null;
             }
 
+            var symbolsFound = new List<Symbol>();
+
             var moduleNames = new string[] { "ntdll", "kernel32", "kernelbase", "ntoskrnl", "sqldk", "sqlmin", "sqllang", "sqltses", "sqlaccess", "qds", "hkruntime", "hkengine", "hkcompile", "sqlos", "sqlservr" };
-
-            var finalCommand = new StringBuilder();
-
-            if (!getJSON)
-            {
-                finalCommand.AppendLine("\tNew-Item -Type Directory -Path <somepath> -ErrorAction SilentlyContinue");
-            }
-            else
-            {
-                //finalCommand.AppendLine("'files':[");
-            }
 
             foreach (var currentModule in moduleNames)
             {
@@ -967,36 +958,28 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     {
                         using (var dllFile = new PEFile(dllFileStream, false))
                         {
-                            dllFile.GetPdbSignature(out string pdbName, out Guid pdbGuid, out int pdbAge);
+                            dllFile.GetPdbSignature(out string internalPDBName, out Guid pdbGuid, out int pdbAge);
 
-                            pdbName = System.IO.Path.GetFileNameWithoutExtension(pdbName);
+                            var usablePDBName = Path.GetFileNameWithoutExtension(internalPDBName);
 
-                            var signaturePlusAge = pdbGuid.ToString("N") + pdbAge.ToString();
-                            var fileVersion = dllFile.GetFileVersionInfo().FileVersion;
-
-                            var downloadUri = string.Format(@"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb", pdbName, signaturePlusAge);
-
-                            if (!getJSON)
+                            symbolsFound.Add(new Symbol()
                             {
-                                finalCommand.Append("\t");
-                                finalCommand.AppendFormat(@"Invoke-WebRequest -uri '{0}' -OutFile '<somepath>\{1}.pdb' # File version {2}", downloadUri, pdbName, fileVersion);
-                                finalCommand.AppendLine();
-                            }
-                            else
-                            {
-                                finalCommand.AppendLine(downloadUri);
-                            }
+                                PDBName = usablePDBName,
+
+                                InternalPDBName = internalPDBName,
+
+                                DownloadURL = string.Format(@"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb",
+                                    usablePDBName,
+                                    pdbGuid.ToString("N") + pdbAge.ToString()),
+
+                                FileVersion = dllFile.GetFileVersionInfo().FileVersion
+                            });
                         }
                     }
                 }
             }
 
-            if (getJSON)
-            {
-                //finalCommand.AppendLine("]");
-            }
-
-            return finalCommand.ToString(); //.Replace(",]", "]").Replace("'", "\"");
+            return symbolsFound;
         }
     }
 

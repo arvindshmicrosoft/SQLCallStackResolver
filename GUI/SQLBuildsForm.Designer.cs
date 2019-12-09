@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.treeView1 = new System.Windows.Forms.TreeView();
+            this.treeviewSyms = new System.Windows.Forms.TreeView();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.downloadStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.downloadProgress = new System.Windows.Forms.ToolStripProgressBar();
@@ -44,12 +44,12 @@
             // 
             // treeView1
             // 
-            this.treeView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeView1.Location = new System.Drawing.Point(0, 0);
-            this.treeView1.Margin = new System.Windows.Forms.Padding(4);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(548, 598);
-            this.treeView1.TabIndex = 0;
+            this.treeviewSyms.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeviewSyms.Location = new System.Drawing.Point(0, 0);
+            this.treeviewSyms.Margin = new System.Windows.Forms.Padding(4);
+            this.treeviewSyms.Name = "treeView1";
+            this.treeviewSyms.Size = new System.Drawing.Size(548, 598);
+            this.treeviewSyms.TabIndex = 0;
             // 
             // statusStrip1
             // 
@@ -83,7 +83,7 @@
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.treeView1);
+            this.splitContainer1.Panel1.Controls.Add(this.treeviewSyms);
             // 
             // splitContainer1.Panel2
             // 
@@ -113,7 +113,7 @@
             this.checkPDBAvail.TabIndex = 3;
             this.checkPDBAvail.Text = "Check PDB availability";
             this.checkPDBAvail.UseVisualStyleBackColor = true;
-            this.checkPDBAvail.Click += new System.EventHandler(this.checkPDBAvail_Click);
+            this.checkPDBAvail.Click += new System.EventHandler(this.CheckPDBAvail_Click);
             // 
             // SQLBuildsForm
             // 
@@ -142,7 +142,7 @@
 
         #endregion
 
-        private System.Windows.Forms.TreeView treeView1;
+        private System.Windows.Forms.TreeView treeviewSyms;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel downloadStatus;
         private System.Windows.Forms.ToolStripProgressBar downloadProgress;
