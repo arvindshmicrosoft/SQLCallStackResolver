@@ -32,6 +32,8 @@
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Newtonsoft.Json;
+    using System;
+    using System.Net;
 
     public class Symbol
     {
@@ -42,6 +44,32 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public string DownloadURL;
 
+        public bool DownloadVerified;
+
         public string FileVersion;
+
+        public static bool IsURLValid(string url)
+        {
+            if (!string.IsNullOrEmpty(url))
+            {
+                var uri = new Uri(url);
+
+                try
+                {
+                    var request = WebRequest.Create(url) as HttpWebRequest;
+                    request.Method = "HEAD";
+                    var response = request.GetResponse() as HttpWebResponse;
+                    response.Close();
+                }
+                catch
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
     }
 }

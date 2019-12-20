@@ -32,14 +32,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
@@ -160,24 +156,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     {
                         var url = sym.DownloadURL;
 
-                        if (!string.IsNullOrEmpty(url))
+                        downloadStatus.Text = url;
+
+                        if (!Symbol.IsURLValid(url))
                         {
-                            var uri = new Uri(url);
-
-                            downloadStatus.Text = url;
-                            activeDownload = true;
-
-                            try
-                            {
-                                var request = WebRequest.Create(url) as HttpWebRequest;
-                                request.Method = "HEAD";
-                                var response = request.GetResponse() as HttpWebResponse;
-                                response.Close();
-                            }
-                            catch
-                            {
-                                failedUrls.Add(url);
-                            }
+                            failedUrls.Add(url);
                         }
                     }
 

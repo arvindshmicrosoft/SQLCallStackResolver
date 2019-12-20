@@ -39,6 +39,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System.IO;
     using System.Net;
     using System.Globalization;
+    using System.Configuration;
 
     public partial class MainForm : Form
     {
@@ -273,8 +274,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             DateTime lastUpdDateTime = DateTime.MinValue;
 
-            var sqlBuildInfoUpdateURLs = System.Configuration.ConfigurationManager.AppSettings["SQLBuildInfoUpdateURLs"].Split(';');
-            var sqlBuildInfoURLs = System.Configuration.ConfigurationManager.AppSettings["SQLBuildInfoURLs"].Split(';');
+            var sqlBuildInfoUpdateURLs = ConfigurationManager.AppSettings["SQLBuildInfoUpdateURLs"].Split(';');
+            var sqlBuildInfoURLs = ConfigurationManager.AppSettings["SQLBuildInfoURLs"].Split(';');
 
             // get the timestamp of the first valid file within SQLBuildInfoURLs
             foreach (var url in sqlBuildInfoUpdateURLs)

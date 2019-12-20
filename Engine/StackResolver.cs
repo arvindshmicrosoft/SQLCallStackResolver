@@ -32,7 +32,6 @@
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Dia;
-    using Microsoft.Diagnostics.Runtime.Interop;
     using Microsoft.Diagnostics.Runtime.Utilities;
     using Microsoft.SqlServer.XEvent.XELite;
     using System;
@@ -257,48 +256,51 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <returns></returns>
         public unsafe Dictionary<int, ExportedSymbol> GetExports(string DLLPath)
         {
-            var Header = new PEFile(DLLPath).Header;
-
-            var dir = Header.ExportDirectory;
-            var offset = Header.RvaToFileOffset(Convert.ToInt32(dir.VirtualAddress));
-
-            // this is the placeholder for the final mapping of ordinal # to address map
-            Dictionary<int, ExportedSymbol> exports = null;
-            
-            using (var mmf = MemoryMappedFile.CreateFromFile(new FileStream(DLLPath, FileMode.Open, FileAccess.Read, FileShare.Read), null, 0, MemoryMappedFileAccess.Read, null, HandleInheritability.None, false))
+            using (var dllStream = new FileStream(DLLPath, FileMode.Open, FileAccess.Read))
             {
-                using (var _accessor = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
+                var dllImage = new PEImage(dllStream);
+
+                var dir = dllImage.OptionalHeader.ExportDirectory;
+                var offset = dllImage.RvaToOffset(Convert.ToInt32(dir.VirtualAddress));
+
+                // this is the placeholder for the final mapping of ordinal # to address map
+                Dictionary<int, ExportedSymbol> exports = null;
+
+                using (var mmf = MemoryMappedFile.CreateFromFile(dllStream, null, 0, MemoryMappedFileAccess.Read, null, HandleInheritability.None, false))
                 {
-                    _accessor.Read(offset, out IMAGE_EXPORT_DIRECTORY exportDirectory);
-
-                    var count = exportDirectory.NumberOfFunctions;
-                    exports = new Dictionary<int, ExportedSymbol>(count);
-
-                    var namesOffset = exportDirectory.AddressOfNames != 0 ? Header.RvaToFileOffset(exportDirectory.AddressOfNames) : 0;
-                    var ordinalOffset = exportDirectory.AddressOfOrdinals != 0 ? Header.RvaToFileOffset(exportDirectory.AddressOfOrdinals) : 0;
-                    var functionsOffset = Header.RvaToFileOffset(exportDirectory.AddressOfFunctions);
-
-                    var ordinalBase = (int)exportDirectory.Base;
-
-                    var name = new sbyte[64];
-                    fixed (sbyte* p = name)
+                    using (var _accessor = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
                     {
-                        for (uint i = 0; i < count; i++)
-                        {
-                            // read function address
-                            var address = _accessor.ReadUInt32(functionsOffset + i * 4);
+                        _accessor.Read(offset, out IMAGE_EXPORT_DIRECTORY exportDirectory);
 
-                            exports.Add((int)(ordinalBase + i), new ExportedSymbol
+                        var count = exportDirectory.NumberOfFunctions;
+                        exports = new Dictionary<int, ExportedSymbol>(count);
+
+                        var namesOffset = exportDirectory.AddressOfNames != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfNames) : 0;
+                        var ordinalOffset = exportDirectory.AddressOfOrdinals != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfOrdinals) : 0;
+                        var functionsOffset = dllImage.RvaToOffset(exportDirectory.AddressOfFunctions);
+
+                        var ordinalBase = (int)exportDirectory.Base;
+
+                        var name = new sbyte[64];
+                        fixed (sbyte* p = name)
+                        {
+                            for (uint i = 0; i < count; i++)
                             {
-                                Name = string.Format("Ordinal{0}", ordinalBase + i),
-                                Address = address
-                            });
+                                // read function address
+                                var address = _accessor.ReadUInt32(functionsOffset + i * 4);
+
+                                exports.Add((int)(ordinalBase + i), new ExportedSymbol
+                                {
+                                    Name = string.Format("Ordinal{0}", ordinalBase + i),
+                                    Address = address
+                                });
+                            }
                         }
                     }
                 }
-            }
 
-            return exports;
+                return exports;
+            }
         }
 
         /// <summary>
@@ -562,7 +564,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 // if we did find a block symbol then we look for its parent till we find either a function or public symbol
                 // an addition check is on the name of the symbol being non-null and non-empty
-                while (!(mysym.symTag == (uint) SymTag.Function || mysym.symTag == (uint)SymTag.PublicSymbol) && string.IsNullOrEmpty(mysym.name))
+                while (!(mysym.symTag == (uint) SymTagEnum.SymTagFunction || mysym.symTag == (uint)Dia.SymTagEnum.SymTagPublicSymbol) && string.IsNullOrEmpty(mysym.name))
                 {
                     mysym = mysym.lexicalParent;
                 }
@@ -927,7 +929,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             if (string.IsNullOrEmpty(dllSearchPath))
             {
-                return null;
+                return new List<Symbol>();
             }
 
             var symbolsFound = new List<Symbol>();
@@ -941,6 +943,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 foreach (var currPath in splitRootPaths)
                 {
+                    if (!Directory.Exists(currPath))
+                    {
+                        continue;
+                    }
+
                     var foundFiles = from f in Directory.EnumerateFiles(currPath, currentModule + ".*", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
                                      where f.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) || f.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase)
                                      select f;
@@ -956,25 +963,30 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     using (var dllFileStream = new FileStream(finalFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        using (var dllFile = new PEFile(dllFileStream, false))
+                        var dllImage = new PEImage(dllFileStream, false);
+
+                        var internalPDBName = dllImage.DefaultPdb.FileName;
+                        var pdbGuid = dllImage.DefaultPdb.Guid;
+                        var pdbAge = dllImage.DefaultPdb.Revision;
+
+                        var usablePDBName = Path.GetFileNameWithoutExtension(internalPDBName);
+
+                        var newSymbol = new Symbol()
                         {
-                            dllFile.GetPdbSignature(out string internalPDBName, out Guid pdbGuid, out int pdbAge);
+                            PDBName = usablePDBName,
 
-                            var usablePDBName = Path.GetFileNameWithoutExtension(internalPDBName);
+                            InternalPDBName = internalPDBName,
 
-                            symbolsFound.Add(new Symbol()
-                            {
-                                PDBName = usablePDBName,
+                            DownloadURL = string.Format(@"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb",
+                                usablePDBName,
+                                pdbGuid.ToString("N") + pdbAge.ToString()),
 
-                                InternalPDBName = internalPDBName,
+                            FileVersion = dllImage.GetFileVersionInfo().FileVersion
+                        };
 
-                                DownloadURL = string.Format(@"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb",
-                                    usablePDBName,
-                                    pdbGuid.ToString("N") + pdbAge.ToString()),
+                        newSymbol.DownloadVerified = Symbol.IsURLValid(newSymbol.DownloadURL);
 
-                                FileVersion = dllFile.GetFileVersionInfo().FileVersion
-                            });
-                        }
+                        symbolsFound.Add(newSymbol);
                     }
                 }
             }
