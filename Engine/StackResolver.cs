@@ -666,7 +666,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             _loadedModules.Clear();
 
-            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>\w+)");
+            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>0x[0-9a-fA-F`]+)");
             var mcmodules = rgxmoduleaddress.Matches(baseAddressesString);
 
             try
@@ -676,7 +676,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     var newModule = new ModuleInfo()
                     {
                         ModuleName = Path.GetFileNameWithoutExtension(matchedmoduleinfo.Groups["filepath"].Value),
-                        BaseAddress = Convert.ToUInt64(matchedmoduleinfo.Groups["baseaddress"].Value, 16),
+                        BaseAddress = Convert.ToUInt64(matchedmoduleinfo.Groups["baseaddress"].Value.Replace("`", string.Empty), 16),
                         EndAddress = ulong.MaxValue // stub this with an 'infinite' end address; only the highest loaded module will end up with this value finally
                     };
 
