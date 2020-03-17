@@ -30,61 +30,27 @@
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
 //</copyright>
 //------------------------------------------------------------------------------
+
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
-    using System;
+    using System.Runtime.InteropServices;
 
-    class Program
+    /// <summary>
+    /// PE header's Image Export Directory
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct IMAGE_EXPORT_DIRECTORY
     {
-        static void Main(string[] args)
-        {
-            if (!TestBlockResolution())
-                Console.WriteLine("FAIL: TestBlockResolution");
-            else
-                Console.WriteLine("PASS: TestBlockResolution");
-
-            if (!TestOrdinal())
-                Console.WriteLine("FAIL: TestOrdinal");
-            else
-                Console.WriteLine("PASS: TestOrdinal");
-
-        }
-
-        private static bool TestBlockResolution()
-        {
-            var csr = new StackResolver();
-            var ret = csr.ResolveCallstacks("Return Addr: 00007FF830D4CDA4 Module(KERNELBASE+000000000009CDA4)",
-                @"..\..\Tests\TestCases\TestBlockResolution",
-                false,
-                null,
-                false,
-                false,
-                false,
-                false,
-                true,
-                false);
-
-            return ret.Trim() == "KERNELBASE!SignalObjectAndWait+147716";
-        }
-
-        private static bool TestOrdinal()
-        {
-            var csr = new StackResolver();
-            var dllPaths = new System.Collections.Generic.List<string>();
-            dllPaths.Add(@"..\..\Tests\TestCases\TestOrdinal");
-
-            var ret = csr.ResolveCallstacks("sqldk!Ordinal298+00000000000004A5",
-                @"..\..\Tests\TestCases\TestOrdinal",
-                false,
-                dllPaths,
-                false,
-                false,
-                false,
-                false,
-                true,
-                false);
-
-            return ret.Trim() == "sqldk!SOS_Scheduler::SwitchContext+941";
-        }
+        public uint Characteristics;
+        public uint TimeDateStamp;
+        public ushort MajorVersion;
+        public ushort MinorVersion;
+        public int Name;
+        public int Base;
+        public int NumberOfFunctions;
+        public int NumberOfNames;
+        public int AddressOfFunctions;
+        public int AddressOfNames;    
+        public int AddressOfOrdinals;                                 
     }
 }

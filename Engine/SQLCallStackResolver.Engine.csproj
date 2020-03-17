@@ -18,7 +18,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\Target\Debug\</OutputPath>
-<BaseIntermediateOutputPath>..\Target\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\Target\</BaseIntermediateOutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -28,7 +28,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\Target\Release\</OutputPath>
-<BaseIntermediateOutputPath>..\Target\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>..\Target\</BaseIntermediateOutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -108,8 +108,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DiaUtil.cs" />
+    <Compile Include="ExportedSymbol.cs" />
+    <Compile Include="IMAGE_EXPORT_DIRECTORY.cs" />
+    <Compile Include="ModuleInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StackResolver.cs" />
+    <Compile Include="StackWithCount.cs" />
+    <Compile Include="ThreadParams.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
