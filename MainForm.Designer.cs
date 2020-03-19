@@ -40,9 +40,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                _resolver.Dispose();
+
+                if (components != null)
+                {
+                    components.Dispose();
+                }
             }
             base.Dispose(disposing);
         }
@@ -76,6 +81,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.PDBPathPicker = new System.Windows.Forms.Button();
             this.BinaryPathPicker = new System.Windows.Forms.Button();
             this.BucketizeXEL = new System.Windows.Forms.CheckBox();
+            this.cachePDB = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // ResolveCallStackButton
@@ -110,8 +116,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // pdbRecurse
             // 
             this.pdbRecurse.AutoSize = true;
-            this.pdbRecurse.Checked = true;
-            this.pdbRecurse.CheckState = System.Windows.Forms.CheckState.Checked;
             this.pdbRecurse.Location = new System.Drawing.Point(479, 481);
             this.pdbRecurse.Margin = new System.Windows.Forms.Padding(2);
             this.pdbRecurse.Name = "pdbRecurse";
@@ -293,12 +297,24 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.BucketizeXEL.Text = "Bucketize XEL?";
             this.BucketizeXEL.UseVisualStyleBackColor = true;
             // 
+            // cachePDB
+            // 
+            this.cachePDB.AutoSize = true;
+            this.cachePDB.Location = new System.Drawing.Point(1031, 512);
+            this.cachePDB.Margin = new System.Windows.Forms.Padding(2);
+            this.cachePDB.Name = "cachePDB";
+            this.cachePDB.Size = new System.Drawing.Size(109, 21);
+            this.cachePDB.TabIndex = 22;
+            this.cachePDB.Text = "Copy PDBs?";
+            this.cachePDB.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(1283, 542);
+            this.Controls.Add(this.cachePDB);
             this.Controls.Add(this.BucketizeXEL);
             this.Controls.Add(this.BinaryPathPicker);
             this.Controls.Add(this.PDBPathPicker);
@@ -350,6 +366,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private System.Windows.Forms.Button PDBPathPicker;
         private System.Windows.Forms.Button BinaryPathPicker;
         private System.Windows.Forms.CheckBox BucketizeXEL;
+        private System.Windows.Forms.CheckBox cachePDB;
     }
 }
 

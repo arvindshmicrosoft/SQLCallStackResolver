@@ -78,7 +78,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 FramesOnSingleLine.Checked,
                 IncludeLineNumbers.Checked,
                 RelookupSource.Checked,
-                includeOffsets.Checked
+                includeOffsets.Checked,
+                cachePDB.Checked
                 );
         }
 

@@ -30,61 +30,46 @@
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
 //</copyright>
 //------------------------------------------------------------------------------
+
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
+    using Dia;
     using System;
+    using System.Runtime.InteropServices;
 
-    class Program
+    /// <summary>
+    /// Wrapper class around DIA
+    /// </summary>
+    public class DiaUtil
     {
-        static void Main(string[] args)
+        public IDiaDataSource _IDiaDataSource;
+        public IDiaSession _IDiaSession;
+        private bool disposedValue = false;
+
+        public DiaUtil(string pdbName)
         {
-            if (!TestBlockResolution())
-                Console.WriteLine("FAIL: TestBlockResolution");
-            else
-                Console.WriteLine("PASS: TestBlockResolution");
-
-            if (!TestOrdinal())
-                Console.WriteLine("FAIL: TestOrdinal");
-            else
-                Console.WriteLine("PASS: TestOrdinal");
-
+            _IDiaDataSource = new DiaSource();
+            _IDiaDataSource.loadDataFromPdb(pdbName);
+            _IDiaDataSource.openSession(out _IDiaSession);
         }
 
-        private static bool TestBlockResolution()
+        public void Dispose()
         {
-            var csr = new StackResolver();
-            var ret = csr.ResolveCallstacks("Return Addr: 00007FF830D4CDA4 Module(KERNELBASE+000000000009CDA4)",
-                @"..\..\Tests\TestCases\TestBlockResolution",
-                false,
-                null,
-                false,
-                false,
-                false,
-                false,
-                true,
-                false);
-
-            return ret.Trim() == "KERNELBASE!SignalObjectAndWait+147716";
+            this.Dispose(true);
         }
 
-        private static bool TestOrdinal()
+        protected virtual void Dispose(bool disposing)
         {
-            var csr = new StackResolver();
-            var dllPaths = new System.Collections.Generic.List<string>();
-            dllPaths.Add(@"..\..\Tests\TestCases\TestOrdinal");
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Marshal.FinalReleaseComObject(_IDiaSession);
+                    Marshal.FinalReleaseComObject(_IDiaDataSource);
+                }
 
-            var ret = csr.ResolveCallstacks("sqldk!Ordinal298+00000000000004A5",
-                @"..\..\Tests\TestCases\TestOrdinal",
-                false,
-                dllPaths,
-                false,
-                false,
-                false,
-                false,
-                true,
-                false);
-
-            return ret.Trim() == "sqldk!SOS_Scheduler::SwitchContext+941";
+                disposedValue = true;
+            }
         }
     }
 }
