@@ -46,7 +46,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System.Threading.Tasks;
     using System.Xml;
 
-    public class StackResolver
+    public class StackResolver : IDisposable
     {
         /// <summary>
         /// This is used to store module name and start / end virtual address ranges
@@ -60,6 +60,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// Only populated if the user provides the 'image path' to the DLLs
         /// </summary>
         Dictionary<string, Dictionary<int, ExportedSymbol>> _DLLOrdinalMap;
+
+        /// <summary>
+        /// A cache of already resolved addresses
+        /// </summary>
+        Dictionary<string, string> cachedSymbols = new Dictionary<string, string>();
+
+        /// <summary>
+        /// R/W lock to protect the above cached symbols dictionary
+        /// </summary>
+        ReaderWriterLockSlim rwLockCachedSymbols = new ReaderWriterLockSlim();
 
         /// <summary>
         /// This function loads DLLs from a specified path, so that we can then build the DLL export's ordinal / address map
@@ -548,6 +558,21 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             // the offsets in the XE output are in hex, so we convert to base-10 accordingly
             var rva = Convert.ToUInt32(offset, 16);
+            var symKey = moduleName + rva.ToString();
+
+            string result = null;
+            this.rwLockCachedSymbols.EnterReadLock();
+            if (this.cachedSymbols.ContainsKey(symKey))
+            {
+                result = this.cachedSymbols[symKey];
+            }
+            this.rwLockCachedSymbols.ExitReadLock();
+
+            if (!string.IsNullOrEmpty(result))
+            {
+                // value was in cache
+                return result;
+            }
 
             // process the function name (symbol)
             // initially we look for 'block' symbols, which have a parent function
@@ -644,9 +669,18 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             // make sure we cleanup COM allocations for the resolved sym
-            Marshal.ReleaseComObject(mysym);
+            Marshal.FinalReleaseComObject(mysym);
 
-            return string.Format("{0}!{1}{2}\t{3}", moduleName, funcname2, offsetStr, sourceInfo).Trim();
+            result = string.Format("{0}!{1}{2}\t{3}", moduleName, funcname2, offsetStr, sourceInfo).Trim();
+
+            this.rwLockCachedSymbols.EnterWriteLock();
+            if (!this.cachedSymbols.ContainsKey(symKey))
+            {
+                this.cachedSymbols.Add(symKey, result);
+            }
+            this.rwLockCachedSymbols.ExitWriteLock();
+
+            return result;
         }
 
         /// <summary>
@@ -666,7 +700,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             _loadedModules.Clear();
 
-            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>\w+)");
+            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>0x[0-9a-fA-F`]+)");
             var mcmodules = rgxmoduleaddress.Matches(baseAddressesString);
 
             try
@@ -676,7 +710,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     var newModule = new ModuleInfo()
                     {
                         ModuleName = Path.GetFileNameWithoutExtension(matchedmoduleinfo.Groups["filepath"].Value),
-                        BaseAddress = Convert.ToUInt64(matchedmoduleinfo.Groups["baseaddress"].Value, 16),
+                        BaseAddress = Convert.ToUInt64(matchedmoduleinfo.Groups["baseaddress"].Value.Replace("`", string.Empty), 16),
                         EndAddress = ulong.MaxValue // stub this with an 'infinite' end address; only the highest loaded module will end up with this value finally
                     };
 
@@ -716,7 +750,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="rootPaths"></param>
         /// <param name="recurse"></param>
         /// <param name="moduleNames"></param>
-        private bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames)
+        /// <param name="cachePDB">Cache a copy of PDBs into %TEMP%\SymCache</param>
+        private bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames, bool cachePDB)
         {
             // loop through each module, trying to find matched PDB files
             var splitRootPaths = rootPaths.Split(';');
@@ -724,27 +759,44 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 if (!_diautils.ContainsKey(currentModule))
                 {
-                    foreach (var currPath in splitRootPaths)
+                    // check if the PDB is already cached locally
+                    var cachedPDBFile = Path.Combine(Path.GetTempPath(), "SymCache", currentModule + ".pdb");
+                    lock (this)
                     {
-                        if (Directory.Exists(currPath))
+                        if (!File.Exists(cachedPDBFile))
                         {
-                            var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                            if (foundFiles.Count() > 0)
+                            foreach (var currPath in splitRootPaths)
                             {
-                                DiaUtil localDIA = null;
-
-                                try
+                                if (Directory.Exists(currPath))
                                 {
-                                    localDIA = new DiaUtil(foundFiles.First());
-                                }
-                                catch(COMException)
-                                {
-                                    return false;
-                                }
+                                    var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                                    if (foundFiles.Count() > 0)
+                                    {
+                                        if (cachePDB)
+                                        {
+                                            File.Copy(foundFiles.First(), cachedPDBFile);
+                                        }
+                                        else
+                                        {
+                                            cachedPDBFile = foundFiles.First();
+                                        }
 
-                                _diautils.Add(currentModule, localDIA);
-                                break;
+                                        break;
+                                    }
+                                }
                             }
+                        }
+                    }
+
+                    if (File.Exists(cachedPDBFile))
+                    {
+                        try
+                        {
+                            _diautils.Add(currentModule, new DiaUtil(cachedPDBFile));
+                        }
+                        catch (COMException)
+                        {
+                            return false;
                         }
                     }
                 }
@@ -774,8 +826,24 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool framesOnSingleLine, 
             bool includeSourceInfo,
             bool relookupSource,
-            bool includeOffsets)
+            bool includeOffsets,
+            bool cachePDB)
         {
+            this.cachedSymbols.Clear();
+
+            // delete and recreate the cached PDB folder
+            var symCacheFolder = Path.Combine(Path.GetTempPath(), "SymCache");
+            if (Directory.Exists(symCacheFolder))
+            {
+                new DirectoryInfo(symCacheFolder).GetFiles("*", SearchOption.AllDirectories)
+                    .ToList()
+                    .ForEach(file => file.Delete());
+            }
+            else
+            {
+                Directory.CreateDirectory(symCacheFolder);
+            }
+
             var finalCallstack = new StringBuilder();
             var xmldoc = new XmlDocument();
             bool isXMLdoc = false;
@@ -855,53 +923,34 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 }
             }
 
-            // we loop through the list of call stacks to be processed in parallel
-            Parallel.ForEach(listOfCallStacks, currstack =>
+            // Create a pool of threads to process in parallel
+            int numThreads = Math.Min(listOfCallStacks.Count, Environment.ProcessorCount);
+            List<Thread> threads = new List<Thread>();
+            for (int threadOrdinal = 0; threadOrdinal < numThreads; threadOrdinal++)
             {
-                Dictionary<string, DiaUtil> _diautils = new Dictionary<string, DiaUtil>();
-
-                // split the callstack into lines, and for each line try to resolve
-                string ordinalresolvedstack;
-
-                lock (this)
+                var tmpThread = new Thread(ProcessCallStack);
+                threads.Add(tmpThread);
+                tmpThread.Start(new ThreadParams()
                 {
-                    ordinalresolvedstack = LoadDllsIfApplicable(currstack.Callstack, searchDLLRecursively, dllPaths);
-                }
+                    dllPaths = dllPaths,
+                    framesOnSingleLine = framesOnSingleLine,
+                    includeOffsets = includeOffsets,
+                    includeSourceInfo = includeSourceInfo,
+                    listOfCallStacks = listOfCallStacks,
+                    numThreads = numThreads,
+                    relookupSource = relookupSource,
+                    searchDLLRecursively = searchDLLRecursively,
+                    searchPDBsRecursively = searchPDBsRecursively,
+                    symPath = symPath,
+                    threadOrdinal = threadOrdinal,
+                    cachePDB = cachePDB
+                });
+            }
 
-                // sometimes we see call stacks which are arranged horizontally (this typically is seen in Excel or custom reporting tools)
-                // in that case, space is a valid delimiter, and we need to support that as an option
-                var delims = framesOnSingleLine ? new char[2] { ' ', '\n' } : new char[1] { '\n' };
-
-                var callStackLines = ordinalresolvedstack.Replace('\r', ' ').Split(delims, StringSplitOptions.RemoveEmptyEntries);
-
-                // process any frames which are purely virtual address (in such cases, the caller should have specified base addresses)
-                callStackLines = PreProcessVAs(callStackLines);
-
-                // locate the PDBs and populate their DIA session helper classes
-                if (LocateandLoadPDBs(_diautils, symPath, searchPDBsRecursively, EnumModuleNames(callStackLines)))
-                {
-                    // resolve symbols by using DIA
-                    currstack.Resolvedstack = ResolveSymbols(_diautils,
-                        callStackLines,
-                        includeSourceInfo,
-                        relookupSource,
-                        includeOffsets);
-                }
-                else
-                {
-                    currstack.Resolvedstack = string.Empty;
-                }
-
-                // cleanup any older COM objects
-                if (_diautils != null)
-                {
-                    foreach (var diautil in _diautils.Values)
-                    {
-                        Marshal.ReleaseComObject(diautil._IDiaDataSource);
-                        Marshal.ReleaseComObject(diautil._IDiaSession);
-                    }
-                }
-            });
+            foreach (var tmpThread in threads)
+            {
+                tmpThread.Join();
+            }
 
             // populate the output
             foreach (var currstack in listOfCallStacks)
@@ -912,11 +961,86 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 }
                 else
                 {
-                    finalCallstack = new StringBuilder("Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
+                    finalCallstack = new StringBuilder("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
+                    break;
                 }
             }
 
+            // Unfortunately the below is necessary to ensure that the handles to the cached PDB files opened by DIA 
+            // and later deleted at the next invocation of this function, are released deterministically
+            // This is despite we correctly releasing those interface pointers using Marshal.FinalReleaseComObject
+            // Thankfully we only need to resort to this if the caller wants to cache PDBs in the temp folder
+            if (cachePDB)
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+
             return finalCallstack.ToString();
+        }
+
+        /// <summary>
+        /// Function executed by worker threads to process callstacks.
+        /// Threads work on portions of the listOfCallStacks based on their thread ordinal.
+        /// </summary>
+        /// <param name="obj"></param>
+        private void ProcessCallStack(Object obj)
+        {
+            var tp = (ThreadParams)obj;
+
+            Dictionary<string, DiaUtil> _diautils = new Dictionary<string, DiaUtil>();
+
+            for (int tmpStackIndex = 0; tmpStackIndex < tp.listOfCallStacks.Count; tmpStackIndex++)
+            {
+                if (tmpStackIndex % tp.numThreads != tp.threadOrdinal)
+                {
+                    continue;
+                }
+
+                var currstack = tp.listOfCallStacks[tmpStackIndex];
+
+                // split the callstack into lines, and for each line try to resolve
+                string ordinalresolvedstack;
+
+                lock (this)
+                {
+                    ordinalresolvedstack = LoadDllsIfApplicable(currstack.Callstack, tp.searchDLLRecursively, tp.dllPaths);
+                }
+
+                // sometimes we see call stacks which are arranged horizontally (this typically is seen in Excel or custom reporting tools)
+                // in that case, space is a valid delimiter, and we need to support that as an option
+                var delims = tp.framesOnSingleLine ? new char[2] { ' ', '\n' } : new char[1] { '\n' };
+
+                var callStackLines = ordinalresolvedstack.Replace('\r', ' ').Split(delims, StringSplitOptions.RemoveEmptyEntries);
+
+                // process any frames which are purely virtual address (in such cases, the caller should have specified base addresses)
+                callStackLines = PreProcessVAs(callStackLines);
+
+                // locate the PDBs and populate their DIA session helper classes
+                if (LocateandLoadPDBs(_diautils, tp.symPath, tp.searchPDBsRecursively, EnumModuleNames(callStackLines), tp.cachePDB))
+                {
+                    // resolve symbols by using DIA
+                    currstack.Resolvedstack = ResolveSymbols(_diautils,
+                        callStackLines,
+                        tp.includeSourceInfo,
+                        tp.relookupSource,
+                        tp.includeOffsets);
+                }
+                else
+                {
+                    currstack.Resolvedstack = string.Empty;
+                    break;
+                }
+            }
+
+            // cleanup any older COM objects
+            if (_diautils != null)
+            {
+                foreach (var diautil in _diautils.Values)
+                {
+                    diautil.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -993,83 +1117,25 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             return symbolsFound;
         }
-    }
 
-    /// <summary>
-    /// Helper class to store module name, start and end address
-    /// </summary>
-    class ModuleInfo
-    {
-        public string ModuleName;
-        public ulong BaseAddress;
-        public ulong EndAddress;
+        private bool disposedValue = false;
 
-        public override string ToString()
+        protected virtual void Dispose(bool disposing)
         {
-            return string.Format("{0} from {1:X} to {2:X}", ModuleName, BaseAddress, EndAddress);
-        }
-    }
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    rwLockCachedSymbols.Dispose();
+                }
 
-    /// <summary>
-    /// Wrapper class around DIA
-    /// </summary>
-    public class DiaUtil : IDisposable
-    {
-        public IDiaDataSource _IDiaDataSource;
-        public IDiaSession _IDiaSession;
-        public DiaUtil(string pdbName)
-        {
-            _IDiaDataSource = new DiaSource();
-            _IDiaDataSource.loadDataFromPdb(pdbName);
-            _IDiaDataSource.openSession(out _IDiaSession);
+                disposedValue = true;
+            }
         }
 
         public void Dispose()
         {
-            this.Dispose(true);
+            Dispose(true);
         }
-        public void Dispose(bool disposeAll)
-        {
-            Marshal.ReleaseComObject(_IDiaSession);
-            Marshal.ReleaseComObject(_IDiaDataSource);
-        }
-    }
-
-    /// <summary>
-    /// helper class for cases where we have XML output
-    /// </summary>
-    class StackWithCount
-    {
-        internal string Callstack;
-        internal string Resolvedstack;
-        internal int Count;
-    }
-
-    /// <summary>
-    /// Helper class which stores DLL export name and address (offset)
-    /// </summary>
-    public class ExportedSymbol
-    {
-        public string Name { get; set; }
-        public uint Address { get; set; }
-    }
-
-    /// <summary>
-    /// PE header's Image Export Directory
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_EXPORT_DIRECTORY
-    {
-        public uint Characteristics;
-        public uint TimeDateStamp;
-        public ushort MajorVersion;
-        public ushort MinorVersion;
-        public int Name;
-        public int Base;
-        public int NumberOfFunctions;
-        public int NumberOfNames;
-        public int AddressOfFunctions;
-        public int AddressOfNames;    
-        public int AddressOfOrdinals;                                 
     }
 }

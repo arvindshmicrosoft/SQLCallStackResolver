@@ -71,10 +71,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DiaUtil.cs" />
+    <Compile Include="ExportedSymbol.cs" />
+    <Compile Include="IMAGE_EXPORT_DIRECTORY.cs" />
+    <Compile Include="ModuleInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SQLBuildInfo.cs" />
     <Compile Include="StackResolver.cs" />
     <Compile Include="Symbol.cs" />
+    <Compile Include="StackWithCount.cs" />
+    <Compile Include="ThreadParams.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

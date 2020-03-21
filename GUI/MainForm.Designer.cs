@@ -40,9 +40,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
-            if (disposing && (components != null))
+            if (disposing)
             {
-                components.Dispose();
+                _resolver.Dispose();
+
+                if (components != null)
+                {
+                    components.Dispose();
+                }
             }
             base.Dispose(disposing);
         }
@@ -84,6 +89,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.ResolveCallStackButton = new System.Windows.Forms.Button();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.cachePDB = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
             this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
@@ -230,6 +236,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.cachePDB);
             this.groupBox2.Controls.Add(this.DLLrecurse);
             this.groupBox2.Controls.Add(this.selectSQLPDB);
             this.groupBox2.Controls.Add(this.label2);
@@ -290,7 +297,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // 
             // PDBPathPicker
             // 
-            this.PDBPathPicker.Location = new System.Drawing.Point(587, 30);
+            this.PDBPathPicker.Location = new System.Drawing.Point(506, 29);
             this.PDBPathPicker.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.PDBPathPicker.Name = "PDBPathPicker";
             this.PDBPathPicker.Size = new System.Drawing.Size(33, 23);
@@ -313,14 +320,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // pdbRecurse
             // 
             this.pdbRecurse.AutoSize = true;
-            this.pdbRecurse.Checked = true;
-            this.pdbRecurse.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.pdbRecurse.Location = new System.Drawing.Point(624, 31);
+            this.pdbRecurse.Location = new System.Drawing.Point(545, 29);
             this.pdbRecurse.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pdbRecurse.Name = "pdbRecurse";
-            this.pdbRecurse.Size = new System.Drawing.Size(160, 21);
+            this.pdbRecurse.Size = new System.Drawing.Size(83, 21);
             this.pdbRecurse.TabIndex = 28;
-            this.pdbRecurse.Text = "Search in subfolders";
+            this.pdbRecurse.Text = "Recurse";
             this.pdbRecurse.UseVisualStyleBackColor = true;
             // 
             // GetPDBDnldScript
@@ -339,7 +344,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.pdbPaths.Location = new System.Drawing.Point(188, 30);
             this.pdbPaths.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pdbPaths.Name = "pdbPaths";
-            this.pdbPaths.Size = new System.Drawing.Size(393, 22);
+            this.pdbPaths.Size = new System.Drawing.Size(312, 22);
             this.pdbPaths.TabIndex = 27;
             // 
             // label1
@@ -426,7 +431,18 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // statusLabel
             // 
             this.statusLabel.Name = "statusLabel";
-            this.statusLabel.Size = new System.Drawing.Size(0, 17);
+            this.statusLabel.Size = new System.Drawing.Size(0, 16);
+            // 
+            // cachePDB
+            // 
+            this.cachePDB.AutoSize = true;
+            this.cachePDB.Location = new System.Drawing.Point(634, 29);
+            this.cachePDB.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.cachePDB.Name = "cachePDB";
+            this.cachePDB.Size = new System.Drawing.Size(109, 21);
+            this.cachePDB.TabIndex = 33;
+            this.cachePDB.Text = "Cache PDBs";
+            this.cachePDB.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -493,6 +509,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private System.Windows.Forms.Button ResolveCallStackButton;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
+        private System.Windows.Forms.CheckBox cachePDB;
     }
 }
-
