@@ -84,7 +84,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 IncludeLineNumbers.Checked,
                 RelookupSource.Checked,
                 includeOffsets.Checked,
-                cachePDB.Checked
+                cachePDB.Checked,
+                outputFilePath.Text
                 );
 
             this.ShowStatus(string.Empty);
@@ -265,7 +266,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             DialogResult res = sqlbuildsForm.ShowDialog(this);
 
-            this.pdbPaths.AppendText(sqlbuildsForm.pathToPDBs);
+            this.pdbPaths.AppendText((pdbPaths.TextLength == 0 ? string.Empty : ";") + sqlbuildsForm.lastDownloadedSymFolder);
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -360,6 +361,20 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         break;
                     }
                 }
+            }
+        }
+
+        private void outputFilePathPicker_Click(object sender, EventArgs e)
+        {
+            genericSaveFileDlg.FileName = "resolvedstacks.txt";
+            genericSaveFileDlg.Filter = "Text files (*.txt)|*.txt";
+            genericSaveFileDlg.Title = "Save output as";
+
+            var res = genericSaveFileDlg.ShowDialog(this);
+
+            if (res != DialogResult.Cancel)
+            {
+                outputFilePath.Text = genericSaveFileDlg.FileName;
             }
         }
     }

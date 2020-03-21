@@ -198,12 +198,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                     {
                                         var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
                                             xelFileName,
-                                            evt.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.mi"),
+                                            evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fffffff"),
                                             evt.UUID);
 
                                         lock (callstackRaw)
                                         {
-                                            callstackRaw.Add(evtId, callStackString);
+                                            if (!callstackRaw.ContainsKey(evtId))
+                                            {
+                                                callstackRaw.Add(evtId, callStackString);
+                                            }
+                                            else
+                                            {
+                                                callstackRaw[evtId] += Environment.NewLine + callStackString;
+                                            }
                                         }
                                     }
                                 }
@@ -216,7 +223,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (bucketize)
             {
-                xmlEquivalent.AppendLine("<HistogramTarget truncated=\"0\" buckets=\"256\">");
+                xmlEquivalent.AppendLine("<HistogramTarget>");
 
                 foreach (var item in callstackSlots.OrderByDescending(key => key.Value))
                 {
@@ -228,11 +235,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
             else
             {
-                foreach (var item in callstackRaw)
+                xmlEquivalent.AppendLine("<Events>");
+
+                foreach (var item in callstackRaw.OrderBy(key => key.Key))
                 {
-                    xmlEquivalent.AppendLine(item.Key);
-                    xmlEquivalent.AppendLine(item.Value);
+                    xmlEquivalent.AppendFormat("<event key=\"{0}\"><action name='callstack'><value>{1}</value></action></event>", item.Key, item.Value);
+                    xmlEquivalent.AppendLine();
                 }
+
+                xmlEquivalent.AppendLine("</Events>");
             }
 
             return xmlEquivalent.ToString();
@@ -827,7 +838,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool includeSourceInfo,
             bool relookupSource,
             bool includeOffsets,
-            bool cachePDB)
+            bool cachePDB,
+            string outputFilePath)
         {
             this.cachedSymbols.Clear();
 
@@ -953,16 +965,37 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             // populate the output
-            foreach (var currstack in listOfCallStacks)
+            if (!string.IsNullOrEmpty(outputFilePath))
             {
-                if (!string.IsNullOrEmpty(currstack.Resolvedstack))
+                using (var outStream = new StreamWriter(outputFilePath, false))
                 {
-                    finalCallstack.AppendLine(currstack.Resolvedstack);
+                    foreach (var currstack in listOfCallStacks)
+                    {
+                        if (!string.IsNullOrEmpty(currstack.Resolvedstack))
+                        {
+                            outStream.WriteLine(currstack.Resolvedstack);
+                        }
+                        else
+                        {
+                            outStream.WriteLine("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
+                            break;
+                        }
+                    }
                 }
-                else
+            }
+            else
+            {
+                foreach (var currstack in listOfCallStacks)
                 {
-                    finalCallstack = new StringBuilder("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
-                    break;
+                    if (!string.IsNullOrEmpty(currstack.Resolvedstack))
+                    {
+                        finalCallstack.AppendLine(currstack.Resolvedstack);
+                    }
+                    else
+                    {
+                        finalCallstack = new StringBuilder("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
+                        break;
+                    }
                 }
             }
 
@@ -976,7 +1009,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 GC.WaitForPendingFinalizers();
             }
 
-            return finalCallstack.ToString();
+            if (string.IsNullOrEmpty(outputFilePath))
+            {
+                return finalCallstack.ToString();
+            }
+            else
+            {
+                return $@"Output has been saved to {outputFilePath}";
+            }
         }
 
         /// <summary>

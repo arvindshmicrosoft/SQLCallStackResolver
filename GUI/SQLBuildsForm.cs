@@ -44,6 +44,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     {
         const string MagicTagForBuilds = "Build";
         public string pathToPDBs = string.Empty;
+        public string lastDownloadedSymFolder = string.Empty;
         private bool activeDownload = false;
 
         public SQLBuildsForm()
@@ -93,7 +94,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     dnldButton.Enabled = false;
 
-                    Directory.CreateDirectory($@"{pathToPDBs}\{bld.BuildNumber}");
+                    lastDownloadedSymFolder = $@"{pathToPDBs}\{bld.BuildNumber}";
+                    Directory.CreateDirectory(lastDownloadedSymFolder);
                     using (var client = new WebClient())
                     {
                         client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(Client_DownloadProgressChanged);
@@ -108,10 +110,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 var uri = new Uri(url);
                                 string filename = Path.GetFileName(uri.LocalPath);
 
+                                if (File.Exists($@"{lastDownloadedSymFolder}\{filename}"))
+                                {
+                                    continue;
+                                }
+
                                 downloadStatus.Text = filename;
                                 activeDownload = true;
 
-                                client.DownloadFileAsync(new Uri(url), $@"{pathToPDBs}\{bld.BuildNumber}\{filename}");
+                                client.DownloadFileAsync(new Uri(url), $@"{lastDownloadedSymFolder}\{filename}");
 
                                 while (activeDownload)
                                 {
