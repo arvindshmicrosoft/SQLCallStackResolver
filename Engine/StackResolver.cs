@@ -1129,7 +1129,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     {
                         var dllImage = new PEImage(dllFileStream, false);
 
-                        var internalPDBName = dllImage.DefaultPdb.FileName;
+                        var internalPDBName = dllImage.DefaultPdb.Path;
                         var pdbGuid = dllImage.DefaultPdb.Guid;
                         var pdbAge = dllImage.DefaultPdb.Revision;
 
