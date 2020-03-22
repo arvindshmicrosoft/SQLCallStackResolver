@@ -72,6 +72,20 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         ReaderWriterLockSlim rwLockCachedSymbols = new ReaderWriterLockSlim();
 
         /// <summary>
+        /// Status message - populated during associated long-running operations
+        /// </summary>
+        public string StatusMessage;
+
+        private int globalCounter = 0;
+
+        private bool cancelRequested = false;
+
+        /// <summary>
+        /// Percent completed - populated during associated long-running operations
+        /// </summary>
+        public int PercentComplete;
+
+        /// <summary>
         /// This function loads DLLs from a specified path, so that we can then build the DLL export's ordinal / address map
         /// </summary>
         /// <param name="callstack"></param>
@@ -145,6 +159,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <returns>XML equivalent of the histogram corresponding to these events</returns>
         public string ExtractFromXEL(string[] xelFiles, bool bucketize)
         {
+            this.cancelRequested = false;
+
             var callstackSlots = new Dictionary<string, long>();
             var callstackRaw = new Dictionary<string, string>();
             var xmlEquivalent = new StringBuilder();
@@ -156,79 +172,93 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 if (File.Exists(xelFileName))
                 {
-                        var xeStream = new XEFileEventStreamer(xelFileName);
+                    this.StatusMessage = $@"Reading {xelFileName}...";
 
-                        xeStream.ReadEventStream(
-                            () =>
-                            {
-                                return Task.CompletedTask;
-                            },
-                            evt =>
-                            {
-                                var allStacks = (from actTmp in evt.Actions
-                                                 where relevantKeyNames.Contains(actTmp.Key.ToLower())
-                                                 select actTmp.Value as string)
-                                                    .Union(
-                                                    from fldTmp in evt.Fields
-                                                    where relevantKeyNames.Contains(fldTmp.Key.ToLower())
-                                                    select fldTmp.Value as string);
+                    var xeStream = new XEFileEventStreamer(xelFileName);
+                    //long relevantEventCount = 0;
+                    //long processedCount = 0;
 
-                                foreach (var callStackString in allStacks)
+                    xeStream.ReadEventStream(
+                        () =>
+                        {
+                            return Task.CompletedTask;
+                        },
+                        evt =>
+                        {
+                            var allStacks = (from actTmp in evt.Actions
+                                             where relevantKeyNames.Contains(actTmp.Key.ToLower())
+                                             select actTmp.Value as string)
+                                                .Union(
+                                                from fldTmp in evt.Fields
+                                                where relevantKeyNames.Contains(fldTmp.Key.ToLower())
+                                                select fldTmp.Value as string);
+
+                            //relevantEventCount = allStacks.Count();
+
+                            //this.StatusMessage = $@"Found {relevantEventCount} relevant events in {xelFileName}, processing them...";
+
+                            foreach (var callStackString in allStacks)
+                            {
+                                if (string.IsNullOrEmpty(callStackString))
                                 {
-                                    if (string.IsNullOrEmpty(callStackString))
-                                    {
-                                        continue;
-                                    }
+                                    continue;
+                                }
 
-                                    if (bucketize)
+                                if (bucketize)
+                                {
+                                    lock (callstackSlots)
                                     {
-                                        lock (callstackSlots)
+                                        if (!callstackSlots.ContainsKey(callStackString))
                                         {
-                                            if (!callstackSlots.ContainsKey(callStackString))
-                                            {
-                                                callstackSlots.Add(callStackString, 1);
-                                            }
-                                            else
-                                            {
-                                                callstackSlots[callStackString]++;
-                                            }
+                                            callstackSlots.Add(callStackString, 1);
                                         }
-                                    }
-                                    else
-                                    {
-                                        var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
-                                            xelFileName,
-                                            evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fffffff"),
-                                            evt.UUID);
-
-                                        lock (callstackRaw)
+                                        else
                                         {
-                                            if (!callstackRaw.ContainsKey(evtId))
-                                            {
-                                                callstackRaw.Add(evtId, callStackString);
-                                            }
-                                            else
-                                            {
-                                                callstackRaw[evtId] += Environment.NewLine + callStackString;
-                                            }
+                                            callstackSlots[callStackString]++;
                                         }
                                     }
                                 }
+                                else
+                                {
+                                    var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
+                                        xelFileName,
+                                        evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fffffff"),
+                                        evt.UUID);
 
-                                return Task.CompletedTask;
-                            },
-                            CancellationToken.None).Wait();
+                                    lock (callstackRaw)
+                                    {
+                                        if (!callstackRaw.ContainsKey(evtId))
+                                        {
+                                            callstackRaw.Add(evtId, callStackString);
+                                        }
+                                        else
+                                        {
+                                            callstackRaw[evtId] += Environment.NewLine + callStackString;
+                                        }
+                                    }
+                                }
+                            }
+
+                            return Task.CompletedTask;
+                        },
+                        CancellationToken.None).Wait();
                 }
             }
+
+            this.StatusMessage = "Finished reading file(s), finalizing output...";
 
             if (bucketize)
             {
                 xmlEquivalent.AppendLine("<HistogramTarget>");
+                this.globalCounter = 0;
 
                 foreach (var item in callstackSlots.OrderByDescending(key => key.Value))
                 {
                     xmlEquivalent.AppendFormat("<Slot count=\"{0}\"><value>{1}</value></Slot>", item.Value, item.Key);
                     xmlEquivalent.AppendLine();
+
+                    this.globalCounter++;
+                    this.PercentComplete = (int) ((double)this.globalCounter / callstackSlots.Count * 100.0);
                 }
 
                 xmlEquivalent.AppendLine("</HistogramTarget>");
@@ -236,17 +266,28 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             else
             {
                 xmlEquivalent.AppendLine("<Events>");
+                this.globalCounter = 0;
 
                 foreach (var item in callstackRaw.OrderBy(key => key.Key))
                 {
                     xmlEquivalent.AppendFormat("<event key=\"{0}\"><action name='callstack'><value>{1}</value></action></event>", item.Key, item.Value);
                     xmlEquivalent.AppendLine();
+
+                    this.globalCounter++;
+                    this.PercentComplete = (int)((double)this.globalCounter / callstackRaw.Count * 100.0);
                 }
 
                 xmlEquivalent.AppendLine("</Events>");
             }
 
+            this.StatusMessage = $@"Finished processing {xelFiles.Count()} XEL files";
+
             return xmlEquivalent.ToString();
+        }
+
+        public void CancelRunningTasks()
+        {
+            this.cancelRequested = true;
         }
 
         /// <summary>
@@ -841,6 +882,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool cachePDB,
             string outputFilePath)
         {
+            this.cancelRequested = false;
+
             this.cachedSymbols.Clear();
 
             // delete and recreate the cached PDB folder
@@ -863,6 +906,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // we evaluate if the input is XML containing multiple stacks
             try
             {
+                this.PercentComplete = 0;
+                this.StatusMessage = "Inspecting input to determine processing plan...";
+
                 xmldoc.LoadXml(inputCallstackText);
                 isXMLdoc = true;
             }
@@ -875,6 +921,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (!isXMLdoc)
             {
+                this.StatusMessage = "Input being treated as a single callstack...";
                 listOfCallStacks.Add(new StackWithCount()
                 {
                     Callstack = inputCallstackText,
@@ -883,6 +930,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
             else
             {
+                this.StatusMessage = "Input is well formed XML, proceeding...";
+
                 // since the input was XML containing multiple stacks, construct the list of stacks to process
                 int stacknum = 0;
                 var allstacknodes = xmldoc.SelectNodes("/HistogramTarget/Slot");
@@ -895,9 +944,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                     if (allstacknodes.Count > 0)
                     {
+                        this.StatusMessage = "Preprocessing XEvent events...";
+
                         // process individual callstacks
                         foreach (XmlNode currstack in allstacknodes)
                         {
+                            if (this.cancelRequested)
+                            {
+                                return "Operation cancelled.";
+                            }
+
                             var callstackTextNode = currstack.SelectSingleNode("./action[@name = 'callstack'][1]/value[1]");
                             var callstackText = callstackTextNode.InnerText;
 
@@ -914,14 +970,26 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             });
 
                             stacknum++;
+                            this.PercentComplete = (int)((double)stacknum / allstacknodes.Count * 100.0);
                         }
+                    }
+                    else
+                    {
+                        this.StatusMessage = "XML input was detected but it does not appear to be a known schema. Cannot proceed, sorry!";
                     }
                 }
                 else
                 {
+                    this.StatusMessage = "Preprocessing XEvent histogram slots...";
+
                     // process histograms
                     foreach (XmlNode currstack in allstacknodes)
                     {
+                        if (this.cancelRequested)
+                        {
+                            return "Operation cancelled.";
+                        }
+
                         var slotcount = int.Parse(currstack.Attributes["count"].Value);
                         var candidatestack = string.Format("Slot_{0}\t[count:{1}]:\r\n\r\n{2}", stacknum, slotcount, currstack.SelectSingleNode("./value[1]").InnerText);
                         listOfCallStacks.Add(new StackWithCount()
@@ -931,9 +999,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         });
 
                         stacknum++;
+                        this.PercentComplete = (int)((double)stacknum / allstacknodes.Count * 100.0);
                     }
                 }
             }
+
+            this.StatusMessage = "Resolving callstacks to symbols...";
+            this.globalCounter = 0;
 
             // Create a pool of threads to process in parallel
             int numThreads = Math.Min(listOfCallStacks.Count, Environment.ProcessorCount);
@@ -964,13 +1036,28 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 tmpThread.Join();
             }
 
+            if (this.cancelRequested)
+            {
+                return "Operation cancelled.";
+            }
+
+            this.StatusMessage = "Done with symbol resolution, finalizing output...";
+
+            this.globalCounter = 0;
+
             // populate the output
             if (!string.IsNullOrEmpty(outputFilePath))
             {
+                this.StatusMessage = $@"Writing output to file {outputFilePath}";
                 using (var outStream = new StreamWriter(outputFilePath, false))
                 {
                     foreach (var currstack in listOfCallStacks)
                     {
+                        if (this.cancelRequested)
+                        {
+                            return "Operation cancelled.";
+                        }
+
                         if (!string.IsNullOrEmpty(currstack.Resolvedstack))
                         {
                             outStream.WriteLine(currstack.Resolvedstack);
@@ -980,13 +1067,23 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             outStream.WriteLine("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
                             break;
                         }
+
+                        this.globalCounter++;
+                        this.PercentComplete = (int)((double)this.globalCounter / listOfCallStacks.Count * 100.0);
                     }
                 }
             }
             else
             {
+                this.StatusMessage = "Consolidating output for screen display...";
+
                 foreach (var currstack in listOfCallStacks)
                 {
+                    if (this.cancelRequested)
+                    {
+                        return "Operation cancelled.";
+                    }
+
                     if (!string.IsNullOrEmpty(currstack.Resolvedstack))
                     {
                         finalCallstack.AppendLine(currstack.Resolvedstack);
@@ -996,6 +1093,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         finalCallstack = new StringBuilder("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
                         break;
                     }
+
+                    this.globalCounter++;
+                    this.PercentComplete = (int)((double)this.globalCounter / listOfCallStacks.Count * 100.0);
                 }
             }
 
@@ -1008,6 +1108,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
             }
+
+            this.StatusMessage = "Finished!";
 
             if (string.IsNullOrEmpty(outputFilePath))
             {
@@ -1032,6 +1134,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             for (int tmpStackIndex = 0; tmpStackIndex < tp.listOfCallStacks.Count; tmpStackIndex++)
             {
+                if (this.cancelRequested)
+                {
+                    break;
+                }
+
                 if (tmpStackIndex % tp.numThreads != tp.threadOrdinal)
                 {
                     continue;
@@ -1071,6 +1178,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     currstack.Resolvedstack = string.Empty;
                     break;
                 }
+
+                var localCounter = Interlocked.Increment(ref this.globalCounter);
+                this.PercentComplete = (int)((double)localCounter / tp.listOfCallStacks.Count * 100.0);
             }
 
             // cleanup any older COM objects

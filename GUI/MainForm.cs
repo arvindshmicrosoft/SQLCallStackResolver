@@ -40,6 +40,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System.Net;
     using System.Globalization;
     using System.Configuration;
+    using System.ComponentModel;
+    using System.Threading.Tasks;
+    using System.Threading;
 
     public partial class MainForm : Form
     {
@@ -48,7 +51,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             InitializeComponent();
         }
 
-        private StackResolver _resolver = new StackResolver();
+    private StackResolver _resolver = new StackResolver();
+        private Task<string> backgroundTask;
+        private CancellationTokenSource backgroundCTS;
+        private CancellationToken backgroundCT;
+
         private string _baseAddressesString = null;
         internal static string SqlBuildInfoFileName = @"sqlbuildinfo.json";
 
@@ -73,22 +80,37 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return;
             }
 
-            this.ShowStatus("Resolving callstacks; please wait. This may take a while!");
+            this.backgroundTask = Task.Run(() =>
+            {
+                return this._resolver.ResolveCallstacks(callStackInput.Text,
+                    pdbPaths.Text,
+                    pdbRecurse.Checked,
+                    dllPaths,
+                    DLLrecurse.Checked,
+                    FramesOnSingleLine.Checked,
+                    IncludeLineNumbers.Checked,
+                    RelookupSource.Checked,
+                    includeOffsets.Checked,
+                    cachePDB.Checked,
+                    outputFilePath.Text
+                    );
+            });
 
-            finalOutput.Text = this._resolver.ResolveCallstacks(callStackInput.Text,
-                pdbPaths.Text,
-                pdbRecurse.Checked,
-                dllPaths,
-                DLLrecurse.Checked,
-                FramesOnSingleLine.Checked,
-                IncludeLineNumbers.Checked,
-                RelookupSource.Checked,
-                includeOffsets.Checked,
-                cachePDB.Checked,
-                outputFilePath.Text
-                );
+            this.MonitorBackgroundTask(backgroundTask);
 
-            this.ShowStatus(string.Empty);
+            finalOutput.Text = backgroundTask.Result;
+        }
+
+        private void DisableCancelButton()
+        {
+            this.cancelButton.Enabled = false;
+            this.cancelButton.Visible = false;
+        }
+
+        private void EnableCancelButton()
+        {
+            this.cancelButton.Enabled = true;
+            this.cancelButton.Visible = true;
         }
 
         private void EnterBaseAddresses_Click(object sender, EventArgs e)
@@ -174,10 +196,46 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 this.ShowStatus("Loading from XEL files; please wait. This may take a while!");
 
-                callStackInput.Text = this._resolver.ExtractFromXEL(genericOpenFileDlg.FileNames, BucketizeXEL.Checked);
+                this.backgroundTask = Task.Run(() =>
+                {
+                    return this._resolver.ExtractFromXEL(genericOpenFileDlg.FileNames, BucketizeXEL.Checked);
+                });
 
-                this.ShowStatus(string.Empty);
+                this.MonitorBackgroundTask(backgroundTask);
+
+                callStackInput.Text = backgroundTask.Result;
+
+                this.ShowStatus("Finished importing callstacks from XEL file(s)!");
             }
+        }
+
+        private void MonitorBackgroundTask(Task backgroundTask)
+        {
+            backgroundCTS = new CancellationTokenSource();
+            backgroundCT = backgroundCTS.Token;
+
+            this.EnableCancelButton();
+
+            while (!backgroundTask.Wait(30))
+            {
+                if (backgroundCT.IsCancellationRequested)
+                {
+                    this._resolver.CancelRunningTasks();
+                }
+
+                this.ShowStatus(_resolver.StatusMessage);
+                this.progressBar.Value = _resolver.PercentComplete;
+                this.statusStrip1.Refresh();
+                Application.DoEvents();
+            }
+
+            // refresh it one last time to ensure that the last status message is displayed
+            this.ShowStatus(_resolver.StatusMessage);
+            this.progressBar.Value = _resolver.PercentComplete;
+            this.statusStrip1.Refresh();
+            Application.DoEvents();
+
+            this.DisableCancelButton();
         }
 
         private void CallStackInput_DragDrop(object sender, DragEventArgs e)
@@ -376,6 +434,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 outputFilePath.Text = genericSaveFileDlg.FileName;
             }
+        }
+
+        private void cancelButton_Click(object sender, EventArgs e)
+        {
+            this.backgroundCTS.Cancel();
         }
     }
 }

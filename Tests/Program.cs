@@ -61,7 +61,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 false,
                 false,
                 true,
-                false);
+                false,
+                null);
 
             return ret.Trim() == "KERNELBASE!SignalObjectAndWait+147716";
         }
@@ -83,7 +84,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 false,
                 false,
                 true,
-                false);
+                false,
+                null);
 
             return ret.Trim() == "sqldk!SOS_Scheduler::SwitchContext+941";
         }
