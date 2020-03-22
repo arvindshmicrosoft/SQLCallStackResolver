@@ -1154,9 +1154,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     ordinalresolvedstack = LoadDllsIfApplicable(currstack.Callstack, tp.searchDLLRecursively, tp.dllPaths);
                 }
 
-                // sometimes we see call stacks which are arranged horizontally (this typically is seen in Excel or custom reporting tools)
+                // sometimes we see call stacks which are arranged horizontally (this typically is seen when copy-pasting directly
+                // from the SSMS XEvent window (copying the callstack field without opening it in its own viewer)
                 // in that case, space is a valid delimiter, and we need to support that as an option
-                var delims = tp.framesOnSingleLine ? new char[2] { ' ', '\n' } : new char[1] { '\n' };
+                var delims = tp.framesOnSingleLine ? new char[3] { ' ', '\t', '\n' } : new char[1] { '\n' };
 
                 var callStackLines = ordinalresolvedstack.Replace('\r', ' ').Split(delims, StringSplitOptions.RemoveEmptyEntries);
 
