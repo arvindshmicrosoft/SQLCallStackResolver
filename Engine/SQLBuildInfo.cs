@@ -53,7 +53,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public override string ToString()
         {
-            return string.Format($"{Label} - {BuildNumber} - {MachineType} ({KBInfo})");
+            return string.Format($"{ProductLevel} {Label} - {BuildNumber} - {MachineType} ({KBInfo})");
         }
 
         public static Dictionary<string, SQLBuildInfo> GetSqlBuildInfo(string jsonFile)
@@ -92,6 +92,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             allBuilds[currBuildInfo.ToString()] = currBuildInfo;
                         }
                     }
+
+                    jsonRdr.Close();
                 }
 
                 rdr.Close();
@@ -108,6 +110,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     wrtr.WriteLine(JsonConvert.SerializeObject(bld));
                 }
+
+                wrtr.Flush();
+                wrtr.Close();
             }
         }
     }
