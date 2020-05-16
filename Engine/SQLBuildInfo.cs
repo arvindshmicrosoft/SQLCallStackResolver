@@ -53,66 +53,72 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public override string ToString()
         {
-            return string.Format($"{ProductLevel} {Label} - {BuildNumber} - {MachineType} ({KBInfo})");
+            return string.Format($"{ProductMajorVersion} {ProductLevel} {Label} - {BuildNumber} - {MachineType} ({KBInfo})");
         }
 
-        public static Dictionary<string, SQLBuildInfo> GetSqlBuildInfo(string jsonFile)
+        public static SortedDictionary<string, SQLBuildInfo> GetSqlBuildInfo(string jsonFile)
         {
-            var allBuilds = new Dictionary<string, SQLBuildInfo>();
+            var allBuilds = new SortedDictionary<string, SQLBuildInfo>();
 
-            using (var rdr = new StreamReader(jsonFile))
+            using (var fs = new FileStream(jsonFile, FileMode.Open, FileAccess.Read, FileShare.None))
             {
-                using (var jsonRdr = new JsonTextReader(rdr))
+                using (var rdr = new StreamReader(fs))
                 {
-                    jsonRdr.SupportMultipleContent = true;
-
-                    var serializer = new JsonSerializer();
-
-                    while (true)
+                    using (var jsonRdr = new JsonTextReader(rdr))
                     {
-                        if (!jsonRdr.Read())
+                        jsonRdr.SupportMultipleContent = true;
+
+                        var serializer = new JsonSerializer();
+
+                        while (true)
                         {
-                            break;
+                            if (!jsonRdr.Read())
+                            {
+                                break;
+                            }
+
+                            var currBuildInfo = serializer.Deserialize<SQLBuildInfo>(jsonRdr);
+
+                            currBuildInfo.BuildNumber = currBuildInfo.BuildNumber.Trim();
+                            currBuildInfo.KBInfo = currBuildInfo.KBInfo.Trim();
+                            currBuildInfo.Label = currBuildInfo.Label.Trim();
+                            currBuildInfo.ProductLevel = currBuildInfo.ProductLevel.Trim();
+                            currBuildInfo.ProductMajorVersion = currBuildInfo.ProductMajorVersion.Trim();
+
+                            if (!allBuilds.ContainsKey(currBuildInfo.ToString()))
+                            {
+                                allBuilds.Add(currBuildInfo.ToString(), currBuildInfo);
+                            }
+                            else
+                            {
+                                allBuilds[currBuildInfo.ToString()] = currBuildInfo;
+                            }
                         }
 
-                        var currBuildInfo = serializer.Deserialize<SQLBuildInfo>(jsonRdr);
-
-                        currBuildInfo.BuildNumber = currBuildInfo.BuildNumber.Trim();
-                        currBuildInfo.KBInfo = currBuildInfo.KBInfo.Trim();
-                        currBuildInfo.Label = currBuildInfo.Label.Trim();
-                        currBuildInfo.ProductLevel = currBuildInfo.ProductLevel.Trim();
-                        currBuildInfo.ProductMajorVersion = currBuildInfo.ProductMajorVersion.Trim();
-
-                        if (!allBuilds.ContainsKey(currBuildInfo.ToString()))
-                        {
-                            allBuilds.Add(currBuildInfo.ToString(), currBuildInfo);
-                        }
-                        else
-                        {
-                            allBuilds[currBuildInfo.ToString()] = currBuildInfo;
-                        }
+                        jsonRdr.Close();
                     }
 
-                    jsonRdr.Close();
+                    rdr.Close();
                 }
-
-                rdr.Close();
             }
 
-            return allBuilds;
+            return new SortedDictionary<string, SQLBuildInfo>(allBuilds);
         }
 
         public static void SaveSqlBuildInfo(List<SQLBuildInfo> allBuilds, string jsonFile)
         {
-            using (var wrtr = new StreamWriter(jsonFile))
+            using (var fs = new FileStream(jsonFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
             {
-                foreach (var bld in allBuilds)
+                using (var wrtr = new StreamWriter(fs))
                 {
-                    wrtr.WriteLine(JsonConvert.SerializeObject(bld));
-                }
+                    foreach (var bld in allBuilds)
+                    {
+                        wrtr.WriteLine(JsonConvert.SerializeObject(bld));
+                    }
 
-                wrtr.Flush();
-                wrtr.Close();
+                    wrtr.Flush();
+                    wrtr.Close();
+                }
             }
         }
     }

@@ -322,8 +322,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 var dllImage = new PEImage(dllStream);
 
-                var dir = dllImage.OptionalHeader.ExportDirectory;
-                var offset = dllImage.RvaToOffset(Convert.ToInt32(dir.VirtualAddress));
+                var dir = dllImage.PEHeader.ExportTableDirectory;
+                var offset = dllImage.RvaToOffset(Convert.ToInt32(dir.RelativeVirtualAddress));
 
                 // this is the placeholder for the final mapping of ordinal # to address map
                 Dictionary<int, ExportedSymbol> exports = null;
