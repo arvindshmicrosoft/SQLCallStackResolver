@@ -45,12 +45,24 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         public IDiaDataSource _IDiaDataSource;
         public IDiaSession _IDiaSession;
         private bool disposedValue = false;
+        public bool HasSourceInfo = false;
 
         public DiaUtil(string pdbName)
         {
             _IDiaDataSource = new DiaSource();
             _IDiaDataSource.loadDataFromPdb(pdbName);
             _IDiaDataSource.openSession(out _IDiaSession);
+
+            this._IDiaSession.findChildrenEx(this._IDiaSession.globalScope,
+                SymTagEnum.SymTagFunction,
+                null,
+                0,
+                out IDiaEnumSymbols matchedSyms);
+
+            if (matchedSyms.count > 0)
+            {
+                HasSourceInfo = true;
+            }
         }
 
         public void Dispose()
