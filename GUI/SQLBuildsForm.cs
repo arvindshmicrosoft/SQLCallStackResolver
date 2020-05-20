@@ -57,27 +57,25 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var allBuilds = SQLBuildInfo.GetSqlBuildInfo(MainForm.SqlBuildInfoFileName);
 
             // top-level is major versions
-            var sqlMajorVersions = (from SQLBuildInfo b in allBuilds.Values
-                                   select b.ProductMajorVersion).Distinct();
+            var sqlMajorVersions = allBuilds.Values.Select(b => b.ProductMajorVersion).
+                OrderByDescending(b => b).Distinct();
 
             treeviewSyms.Nodes.AddRange(sqlMajorVersions.Select(b => new TreeNode(b) { Name = b } ).ToArray());
 
             // within each major version, get product levels (RTM, SP1 etc.)
             foreach(var ver in sqlMajorVersions)
             {
-                var prodLevels = (from SQLBuildInfo b in allBuilds.Values
-                                  where b.ProductMajorVersion == ver
-                                  select b.ProductLevel).Distinct();
+                var prodLevels = allBuilds.Values.Where(b => b.ProductMajorVersion == ver).
+                    Select(b => b.ProductLevel).OrderByDescending(b => b).Distinct();
 
                 treeviewSyms.Nodes[ver].Nodes.AddRange(prodLevels.Select(pl => new TreeNode(pl) { Name = pl } ).ToArray());
 
                 // finally within each product level get the individual builds
                 foreach (var pl in prodLevels)
                 {
-                    var blds = (from SQLBuildInfo b in allBuilds.Values
-                                      where b.ProductMajorVersion == ver && b.ProductLevel == pl
-                                      && b.SymbolDetails.Count > 0
-                                      select b).Distinct().OrderByDescending(b => b.BuildNumber);
+                    var blds = allBuilds.Values.Where(b => b.ProductMajorVersion == ver && b.ProductLevel == pl
+                                      && b.SymbolDetails.Count > 0).Distinct().
+                                      OrderByDescending(b => b.BuildNumber);
 
                     treeviewSyms.Nodes[ver].Nodes[pl].Nodes.AddRange(blds.Select(bld => new TreeNode(bld.ToString()) { Name = bld.ToString(), Tag = bld }).ToArray());
                 }
