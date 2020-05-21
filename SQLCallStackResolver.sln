@@ -1,13 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.539
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLCallstackResolver.Tests", "Tests\SQLCallstackResolver.Tests.csproj", "{C6CF5A06-527E-4565-821F-890A6E5A83B2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLCallstackResolver.Engine", "Engine\SQLCallstackResolver.Engine.csproj", "{782BBD60-EE45-43CD-8A4F-0505EFE4FF1A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLCallstackResolver.GUI", "GUI\SQLCallstackResolver.GUI.csproj", "{F65803B0-F5B2-4FA4-99B2-C91600E77E26}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Files", "Files", "{551EED46-2D05-4EDC-84E8-8FBCCA7619C2}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build.yml = .github\workflows\build.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -49,7 +49,7 @@
       <HintPath>..\packages\Microsoft.SqlServer.XEvent.XELite.2019.11.20.2\lib\net461\Microsoft.SqlServer.XEvent.XELite.dll</HintPath>
     </Reference>
     <Reference Include="msdia140typelib_clr0200">
-      <HintPath>..\..\..\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\Extensions\TestPlatform\msdia140typelib_clr0200.dll</HintPath>
+      <HintPath>c:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Team Tools\Performance Tools\Plugins\msdia140typelib_clr0200.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL" />

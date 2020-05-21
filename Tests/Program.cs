@@ -32,28 +32,39 @@
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using System;
+    using System.IO;
 
     class Program
     {
         static void Main(string[] args)
         {
+            int retCode = 0;
+
             if (!TestBlockResolution())
+            {
                 Console.WriteLine("FAIL: TestBlockResolution");
+                retCode = 1;
+            }
             else
                 Console.WriteLine("PASS: TestBlockResolution");
 
             if (!TestOrdinal())
+            {
                 Console.WriteLine("FAIL: TestOrdinal");
+                retCode = 1;
+            }
             else
                 Console.WriteLine("PASS: TestOrdinal");
 
+            Environment.ExitCode = retCode;
         }
 
         private static bool TestBlockResolution()
         {
+            var pdbPath = @"..\..\Tests\TestCases\TestBlockResolution";
             var csr = new StackResolver();
             var ret = csr.ResolveCallstacks("Return Addr: 00007FF830D4CDA4 Module(KERNELBASE+000000000009CDA4)",
-                @"..\..\Tests\TestCases\TestBlockResolution",
+                pdbPath,
                 false,
                 null,
                 false,
@@ -63,6 +74,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 true,
                 false,
                 null);
+
+            Console.WriteLine($"TestBlockResolution: ResolveCallstacks returned {ret}");
 
             return ret.Trim() == "KERNELBASE!SignalObjectAndWait+147716";
         }
@@ -86,6 +99,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 true,
                 false,
                 null);
+
+            Console.WriteLine($"TestOrdinal: ResolveCallstacks returned {ret}");
 
             return ret.Trim() == "sqldk!SOS_Scheduler::SwitchContext+941";
         }

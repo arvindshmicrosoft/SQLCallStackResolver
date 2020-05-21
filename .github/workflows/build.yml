@@ -1,0 +1,33 @@
+name: Build SQLCallStackResolver
+on: [push]
+ 
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      name: Checkout Code
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.0
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+    - name: Restore NuGet Packages
+      run: nuget restore SQLCallStackResolver.sln 
+    - name: Build SQLCallStackResolver
+      run: msbuild SQLCallStackResolver.sln /p:Configuration=Release
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: SQLCallStackResolver
+        path: Target\Release
+    - name: Prep for running tests
+      run: .\downloadsyms.ps1 "${{ secrets.SQLDKDLL_URL }}"
+      working-directory: Tests\TestCases
+      shell: powershell
+    - name: Register MSDIA140
+      run: regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Team Tools\Performance Tools\x64\msdia140.dll"
+      shell: powershell
+    - name: Run tests
+      run: .\SQLCallStackResolver.Tests.exe
+      working-directory: Target\Release
+      shell: powershell

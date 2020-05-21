@@ -1,30 +1,46 @@
+param ($sqldkDownloadURL)
+
 $msdlurl = "https://msdl.microsoft.com/download/symbols/"
 
 ### TestBlockResolution
+mkdir -Force ".\TestBlockResolution" -ErrorAction Ignore
 $localpath = ".\TestBlockResolution\kernelbase.pdb"
 if (-not (test-path $localpath))
 {
     Invoke-WebRequest -UseBasicParsing -uri ($msdlurl + "kernelbase.pdb/E26F9607943644BB8CDE6C806006A3F01/kernelbase.pdb") -OutFile $localpath
+    dir $localpath
 }
 
 ### TestOrdinal
+mkdir -Force ".\TestOrdinal" -ErrorAction Ignore
 $localpath = ".\TestOrdinal\sqldk.pdb"
 if (-not (test-path $localpath))
 {
     Invoke-WebRequest -UseBasicParsing -uri ($msdlurl + "sqldk.pdb/6a1934433512464b8b8ed905ad930ee62/sqldk.pdb") -OutFile $localpath
+    dir $localpath
 }
 
 $localpath = ".\TestOrdinal\sqldk.dll"
 if (-not (test-path $localpath))
 {
-    Write-Warning "You must manually download CU14 for SQL 2016 SP1 (KB 4488535) and extract the sqldk.dll from that install to TestBlockResolution\sqldk.dll"
+    try
+    {
+        Invoke-WebRequest -UseBasicParsing -uri $sqldkDownloadURL -OutFile $localpath -ErrorAction Ignore
+    }
+    catch
+    {    
+	}
+
+    if (-not (test-path $localpath))
+    {
+        Write-Warning "You must manually download CU14 for SQL 2016 SP1 (KB 4488535) and extract the sqldk.dll from that install to TestBlockResolution\sqldk.dll"
+    }
 }
 
 #------------------------------------------------------------------------------
-#<copyright company="Microsoft">
 #    The MIT License (MIT)
 #    
-#    Copyright (c) 2017 Microsoft
+#    Copyright (c) 2020 Arvind Shyamsundar
 #    
 #    Permission is hereby granted, free of charge, to any person obtaining a copy
 #    of this software and associated documentation files (the "Software"), to deal
@@ -50,5 +66,4 @@ if (-not (test-path $localpath))
 #    be liable for any damages whatsoever (including, without limitation, damages for loss of business profits,
 #    business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
 #    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
-#</copyright>
 #------------------------------------------------------------------------------
