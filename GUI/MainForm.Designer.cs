@@ -97,7 +97,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.progressBar = new System.Windows.Forms.ToolStripProgressBar();
             this.cancelButton = new System.Windows.Forms.ToolStripDropDownButton();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.formToolTip = new System.Windows.Forms.ToolTip(this.components);
             this.genericSaveFileDlg = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
             this.splitContainer2.Panel1.SuspendLayout();
@@ -251,7 +251,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.label2.Size = new System.Drawing.Size(252, 17);
             this.label2.TabIndex = 8;
             this.label2.Text = "Specify Path(s) to SQL Server binaries";
-            this.toolTip1.SetToolTip(this.label2, "Only need to do this if you are dealing with incomplete stacks collected by -T365" +
+            this.formToolTip.SetToolTip(this.label2, "Only need to do this if you are dealing with incomplete stacks collected by -T365" +
         "6 OR if you need to get PowerShell commands to download PDBs for a specific buil" +
         "d of SQL");
             // 
@@ -320,7 +320,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.cachePDB.Size = new System.Drawing.Size(109, 21);
             this.cachePDB.TabIndex = 33;
             this.cachePDB.Text = "Cache PDBs";
-            this.toolTip1.SetToolTip(this.cachePDB, "This option will copy PDBs from the paths specified to the %TEMP%\\SymCache folder" +
+            this.formToolTip.SetToolTip(this.cachePDB, "This option will copy PDBs from the paths specified to the %TEMP%\\SymCache folder" +
         ". It is highly recommended to use this if you have a UNC path specified.");
             this.cachePDB.UseVisualStyleBackColor = true;
             // 
@@ -349,6 +349,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // pdbRecurse
             // 
             this.pdbRecurse.AutoSize = true;
+            this.pdbRecurse.Checked = true;
+            this.pdbRecurse.CheckState = System.Windows.Forms.CheckState.Checked;
             this.pdbRecurse.Location = new System.Drawing.Point(864, 27);
             this.pdbRecurse.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.pdbRecurse.Name = "pdbRecurse";
@@ -430,7 +432,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.FramesOnSingleLine.Size = new System.Drawing.Size(301, 21);
             this.FramesOnSingleLine.TabIndex = 23;
             this.FramesOnSingleLine.Text = "INPUT: Callstack frames are in a single line";
-            this.toolTip1.SetToolTip(this.FramesOnSingleLine, "Required if copy-pasting XE callstack from SSMS");
+            this.formToolTip.SetToolTip(this.FramesOnSingleLine, "Required if copy-pasting XE callstack from SSMS");
             this.FramesOnSingleLine.UseVisualStyleBackColor = true;
             // 
             // IncludeLineNumbers
@@ -454,7 +456,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.EnterBaseAddresses.Size = new System.Drawing.Size(193, 47);
             this.EnterBaseAddresses.TabIndex = 3;
             this.EnterBaseAddresses.Text = "INPUT: Specify base addresses for modules";
-            this.toolTip1.SetToolTip(this.EnterBaseAddresses, "Required for working with XEL files and hex address-only callstacks");
+            this.formToolTip.SetToolTip(this.EnterBaseAddresses, "Required for working with XEL files and hex address-only callstacks");
             this.EnterBaseAddresses.UseVisualStyleBackColor = true;
             this.EnterBaseAddresses.Click += new System.EventHandler(this.EnterBaseAddresses_Click);
             // 
@@ -604,7 +606,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
         private System.Windows.Forms.CheckBox cachePDB;
-        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.ToolTip formToolTip;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Button outputFilePathPicker;
         private System.Windows.Forms.TextBox outputFilePath;

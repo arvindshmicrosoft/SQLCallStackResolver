@@ -80,6 +80,36 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return;
             }
 
+            if (!pdbPaths.Text.Contains(@"\\") && cachePDB.Checked)
+            {
+                if (DialogResult.Yes == MessageBox.Show(this,
+                    "Cache PDBs is only recommended when getting symbols from UNC paths.\r\n" +
+                    "Would you like to disable this?",
+                    "Disable symbol file cache?",
+                    MessageBoxButtons.YesNo))
+                {
+                    cachePDB.Checked = false;
+                    cachePDB.Refresh();
+                    this.Refresh();
+                    Application.DoEvents();
+                }
+            }
+
+            if (pdbPaths.Text.Contains(@"\\") && !cachePDB.Checked)
+            {
+                if (DialogResult.Yes == MessageBox.Show(this,
+                    "When getting symbols from UNC paths, SQLCallStackResolver can temporary cache a copy when resolving symbols. This may speed things up especially when the UNC path is over a WAN and when you have a number of callstacks to resolve.\r\n" +
+                    "Would you like to enable this?",
+                    "Enable symbol file cache?",
+                    MessageBoxButtons.YesNo))
+                {
+                    cachePDB.Checked = true;
+                    cachePDB.Refresh();
+                    this.Refresh();
+                    Application.DoEvents();
+                }
+            }
+
             this.backgroundTask = Task.Run(() =>
             {
                 return this._resolver.ResolveCallstacks(callStackInput.Text,

@@ -59,9 +59,18 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 0,
                 out IDiaEnumSymbols matchedSyms);
 
-            if (matchedSyms.count > 0)
+            foreach(IDiaSymbol sym in matchedSyms)
             {
-                HasSourceInfo = true;
+                this._IDiaSession.findLinesByRVA(sym.relativeVirtualAddress,
+                    (uint) sym.length,
+                    out IDiaEnumLineNumbers enumLineNums);
+
+                if (enumLineNums.count > 0)
+                {
+                    // this PDB has at least 1 function with source info, so end the search
+                    HasSourceInfo = true;
+                    break;
+                }
             }
         }
 
