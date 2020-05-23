@@ -34,22 +34,24 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using Newtonsoft.Json;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
+    using System.Text;
 
     public class SQLBuildInfo
     {
-        public string ProductMajorVersion;
+        public string ProductMajorVersion = "<<ProductMajorVersion>>";
 
-        public string ProductLevel;
+        public string ProductLevel = "<<ProductLevel>>";
 
-        public string Label;
+        public string Label = "<<BuildName>>";
 
-        public string BuildNumber;
+        public string BuildNumber = "<<BuildNumber>>";
 
-        public string KBInfo;
+        public string KBInfo = "<<KBArticle>>";
 
         public List<Symbol> SymbolDetails;
 
-        public string MachineType;
+        public string MachineType = "<<x64|x86>>";
 
         public override string ToString()
         {
@@ -120,6 +122,34 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     wrtr.Close();
                 }
             }
+        }
+
+        public static string GetDownloadScriptPowerShell(SQLBuildInfo bld, bool includeMarkdown)
+        {
+            var symcmds = new StringBuilder();
+
+            if (null != bld.SymbolDetails && bld.SymbolDetails.Where(s => s.DownloadVerified).Count() > 0)
+            {
+                if (includeMarkdown)
+                {
+                    symcmds.AppendLine($"# {bld}");
+                    symcmds.AppendLine("``` powershell");
+                }
+                symcmds.AppendLine($"# {bld}");
+                symcmds.AppendLine($"$outputFolder = 'c:\\sqlsyms\\{bld.BuildNumber}\\{bld.MachineType}' # <<change this output folder if needed>>'");
+                symcmds.AppendLine($"mkdir -f $outputFolder");
+                foreach (var sym in bld.SymbolDetails)
+                {
+                    if (!sym.DownloadVerified) continue;
+
+                    symcmds.AppendLine($"Invoke-WebRequest -uri '{sym.DownloadURL}' -OutFile \"$outputFolder\\{sym.PDBName}.pdb\" # File version {sym.FileVersion}");
+                }
+
+                if (includeMarkdown) symcmds.AppendLine("```");
+                symcmds.AppendLine();
+            }
+
+            return symcmds.ToString();
         }
     }
 }

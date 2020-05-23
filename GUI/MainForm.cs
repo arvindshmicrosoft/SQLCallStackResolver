@@ -186,18 +186,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return;
             }
 
-            StringBuilder downloadCmds = new StringBuilder();
-            downloadCmds.AppendLine("\tNew-Item -Type Directory -Path <somepath> -ErrorAction SilentlyContinue");
-
-            foreach (var sym in symDetails)
+            var fakeBuild = new SQLBuildInfo()
             {
-                downloadCmds.Append("\t");
-                downloadCmds.AppendFormat(@"Invoke-WebRequest -uri '{0}' -OutFile '<somepath>\{1}.pdb' # File version {2}",
-                    sym.DownloadURL,
-                    sym.PDBName,
-                    sym.FileVersion);
-                downloadCmds.AppendLine();
-            }
+                SymbolDetails = symDetails
+            };
+
+            var downloadCmds = SQLBuildInfo.GetDownloadScriptPowerShell(fakeBuild, false);
 
             this.ShowStatus(string.Empty);
 

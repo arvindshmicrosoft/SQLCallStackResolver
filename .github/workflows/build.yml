@@ -24,9 +24,6 @@ jobs:
       run: .\downloadsyms.ps1 "${{ secrets.SQLDKDLL_URL }}"
       working-directory: Tests\TestCases
       shell: powershell
-    - name: Register MSDIA140
-      run: regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Team Tools\Performance Tools\x64\msdia140.dll"
-      shell: powershell
     - name: Run tests
       run: .\SQLCallStackResolver.Tests.exe
       working-directory: Target\Release
