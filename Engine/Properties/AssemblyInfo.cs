@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("SQLCallStackResolver")]
-[assembly: AssemblyCopyright("Copyright © 2020 Arvind Shyamsundar")]
+[assembly: AssemblyCopyright("Copyright (c) Arvind Shyamsundar")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------------
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2019 Arvind Shyamsundar
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -48,28 +48,21 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public string FileVersion;
 
-        public static bool IsURLValid(string url)
+        public static bool IsURLValid(Uri url)
         {
-            if (!string.IsNullOrEmpty(url))
+            try
             {
-                var uri = new Uri(url);
-
-                try
-                {
-                    var request = WebRequest.Create(url) as HttpWebRequest;
-                    request.Method = "HEAD";
-                    var response = request.GetResponse() as HttpWebResponse;
-                    response.Close();
-                }
-                catch
-                {
-                    return false;
-                }
-
-                return true;
+                var request = WebRequest.Create(url) as HttpWebRequest;
+                request.Method = "HEAD";
+                var response = request.GetResponse() as HttpWebResponse;
+                response.Close();
+            }
+            catch (WebException)
+            {
+                return false;
             }
 
-            return false;
+            return true;
         }
     }
 }

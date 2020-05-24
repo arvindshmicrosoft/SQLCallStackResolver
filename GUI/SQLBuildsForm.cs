@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------------
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2019 Arvind Shyamsundar
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -42,7 +43,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     public partial class SQLBuildsForm : Form
     {
-        const string MagicTagForBuilds = "Build";
         public string pathToPDBs = string.Empty;
         public string lastDownloadedSymFolder = string.Empty;
         private bool activeDownload = false;
@@ -135,8 +135,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
-            double bytesIn = double.Parse(e.BytesReceived.ToString());
-            double totalBytes = double.Parse(e.TotalBytesToReceive.ToString());
+            double bytesIn = e.BytesReceived;
+            double totalBytes = e.TotalBytesToReceive;
             double percentage = bytesIn / totalBytes * 100;
             downloadProgress.ProgressBar.Value = (int)percentage;
             statusStrip1.Refresh();
@@ -163,7 +163,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                         downloadStatus.Text = url;
 
-                        if (!Symbol.IsURLValid(url))
+                        if (!Symbol.IsURLValid(new Uri(url)))
                         {
                             failedUrls.Add(url);
                         }

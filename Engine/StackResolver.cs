@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------------
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2019 Arvind Shyamsundar
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using Microsoft.SqlServer.XEvent.XELite;
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.IO.MemoryMappedFiles;
     using System.Linq;
@@ -53,7 +54,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// Only populated if the user provides a tab-separated string corresponding to the output of the following SQL query:
         /// select name, base_address from sys.dm_os_loaded_modules where name not like '%.rll'
         /// </summary>
-        private List<ModuleInfo> _loadedModules = new List<ModuleInfo>();
+        public List<ModuleInfo> LoadedModules = new List<ModuleInfo>();
 
         /// <summary>
         /// This holds the mapping of the various DLL exports for a module and the address (offset) for each such export
@@ -79,6 +80,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         private int globalCounter = 0;
 
         private bool cancelRequested = false;
+
+        private static object _syncRoot = new object();
 
         /// <summary>
         /// Percent completed - populated during associated long-running operations
@@ -136,9 +139,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 foreach (var currPath in dllPaths)
                 {
                     var foundFiles = Directory.EnumerateFiles(currPath, currmodule + ".dll", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                    if (foundFiles.Count() > 0)
+                    if (foundFiles.Any())
                     {
-                        _DLLOrdinalMap.Add(currmodule, GetExports(foundFiles.First()));
+                        _DLLOrdinalMap.Add(currmodule, StackResolver.GetExports(foundFiles.First()));
 
                         break;
                     }
@@ -153,19 +156,25 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         }
 
         /// <summary>
-        /// Read a XEL file, consume all callstacks, hash them and return the equivalent XML
+        /// Read a XEL file, consume all callstacks, optionally bucketize them, and in all cases,
+        /// return the information as equivalent XML
         /// </summary>
         /// <param name="xelFiles">List of paths to XEL files to read</param>
-        /// <returns>XML equivalent of the histogram corresponding to these events</returns>
-        public string ExtractFromXEL(string[] xelFiles, bool bucketize)
+        /// <returns>A tuple with the count of events and XML equivalent of the histogram corresponding to these events</returns>
+        public Tuple<int, string> ExtractFromXEL(string[] xelFiles, bool bucketize)
         {
+            if (xelFiles == null)
+            {
+                return new Tuple<int, string>(0, string.Empty);
+            }
+
             this.cancelRequested = false;
 
             var callstackSlots = new Dictionary<string, long>();
             var callstackRaw = new Dictionary<string, string>();
             var xmlEquivalent = new StringBuilder();
 
-            // the below feels quite hacky. Unfortunately till such time that we have strong typing in XELite I believe this is necessary
+            // the below feels quite hacky. Unfortunately till such time that we have strong typing in XELite I believe this is unavoidable
             var relevantKeyNames = new string[] { "callstack", "call_stack", "stack_frames" };
 
             foreach (var xelFileName in xelFiles)
@@ -175,8 +184,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     this.StatusMessage = $@"Reading {xelFileName}...";
 
                     var xeStream = new XEFileEventStreamer(xelFileName);
-                    //long relevantEventCount = 0;
-                    //long processedCount = 0;
 
                     xeStream.ReadEventStream(
                         () =>
@@ -186,16 +193,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         evt =>
                         {
                             var allStacks = (from actTmp in evt.Actions
-                                             where relevantKeyNames.Contains(actTmp.Key.ToLower())
+                                             where relevantKeyNames.Contains(actTmp.Key.ToLower(CultureInfo.CurrentCulture))
                                              select actTmp.Value as string)
                                                 .Union(
                                                 from fldTmp in evt.Fields
-                                                where relevantKeyNames.Contains(fldTmp.Key.ToLower())
+                                                where relevantKeyNames.Contains(fldTmp.Key.ToLower(CultureInfo.CurrentCulture))
                                                 select fldTmp.Value as string);
-
-                            //relevantEventCount = allStacks.Count();
-
-                            //this.StatusMessage = $@"Found {relevantEventCount} relevant events in {xelFileName}, processing them...";
 
                             foreach (var callStackString in allStacks)
                             {
@@ -220,9 +223,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 }
                                 else
                                 {
-                                    var evtId = string.Format("File: {0}, Timestamp: {1}, UUID: {2}:",
+                                    var evtId = string.Format(CultureInfo.CurrentCulture,
+                                        "File: {0}, Timestamp: {1}, UUID: {2}:",
                                         xelFileName,
-                                        evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fffffff"),
+                                        evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.CurrentCulture),
                                         evt.UUID);
 
                                     lock (callstackRaw)
@@ -233,7 +237,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                         }
                                         else
                                         {
-                                            callstackRaw[evtId] += Environment.NewLine + callStackString;
+                                            callstackRaw[evtId] += $"{Environment.NewLine}{callStackString}";
                                         }
                                     }
                                 }
@@ -247,6 +251,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             this.StatusMessage = "Finished reading file(s), finalizing output...";
 
+            int finalEventCount;
+
             if (bucketize)
             {
                 xmlEquivalent.AppendLine("<HistogramTarget>");
@@ -254,7 +260,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 foreach (var item in callstackSlots.OrderByDescending(key => key.Value))
                 {
-                    xmlEquivalent.AppendFormat("<Slot count=\"{0}\"><value>{1}</value></Slot>", item.Value, item.Key);
+                    xmlEquivalent.AppendFormat(CultureInfo.CurrentCulture,
+                        "<Slot count=\"{0}\"><value>{1}</value></Slot>",
+                        item.Value,
+                        item.Key);
+
                     xmlEquivalent.AppendLine();
 
                     this.globalCounter++;
@@ -262,27 +272,46 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 }
 
                 xmlEquivalent.AppendLine("</HistogramTarget>");
+
+                finalEventCount = callstackSlots.Count;
             }
             else
             {
                 xmlEquivalent.AppendLine("<Events>");
                 this.globalCounter = 0;
 
+                var hasOverflow = false;
+
                 foreach (var item in callstackRaw.OrderBy(key => key.Key))
                 {
-                    xmlEquivalent.AppendFormat("<event key=\"{0}\"><action name='callstack'><value>{1}</value></action></event>", item.Key, item.Value);
-                    xmlEquivalent.AppendLine();
+                    if (xmlEquivalent.Length < int.MaxValue * 0.90)
+                    {
+                        xmlEquivalent.AppendFormat(CultureInfo.CurrentCulture,
+                            "<event key=\"{0}\"><action name='callstack'><value>{1}</value></action></event>",
+                            item.Key,
+                            item.Value);
+
+                        xmlEquivalent.AppendLine();
+                    }
+                    else
+                    {
+                        hasOverflow = true;
+                    }
 
                     this.globalCounter++;
                     this.PercentComplete = (int)((double)this.globalCounter / callstackRaw.Count * 100.0);
                 }
 
+                if (hasOverflow) xmlEquivalent.AppendLine("<!-- WARNING: output was truncated due to size limits -->");
+
                 xmlEquivalent.AppendLine("</Events>");
+
+                finalEventCount = callstackRaw.Count;
             }
 
-            this.StatusMessage = $@"Finished processing {xelFiles.Count()} XEL files";
+            this.StatusMessage = $@"Finished processing {xelFiles.Length} XEL files";
 
-            return xmlEquivalent.ToString();
+            return new Tuple<int, string>(finalEventCount, xmlEquivalent.ToString());
         }
 
         public void CancelRunningTasks()
@@ -307,8 +336,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             uint offsetSpecified = Convert.ToUInt32(mtch.Groups["offset"].Value, 16);
 
-            return moduleName + ".dll+" +
-                string.Format("0x{0:X}\r\n", _DLLOrdinalMap[moduleName][int.Parse(mtch.Groups["ordinal"].Value)].Address + offsetSpecified);
+            return string.Format(CultureInfo.CurrentCulture,
+                "{0}.dll+0x{1:X}{2}",
+                moduleName,
+                _DLLOrdinalMap[moduleName][int.Parse(mtch.Groups["ordinal"].Value, CultureInfo.CurrentCulture)].Address + offsetSpecified,
+                Environment.NewLine);
         }
 
         /// <summary>
@@ -316,45 +348,48 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// </summary>
         /// <param name="DLLPath"></param>
         /// <returns></returns>
-        public Dictionary<int, ExportedSymbol> GetExports(string DLLPath)
+        public static Dictionary<int, ExportedSymbol> GetExports(string DLLPath)
         {
+            // this is the placeholder for the final mapping of ordinal # to address map
+            Dictionary<int, ExportedSymbol> exports = null;
+
             using (var dllStream = new FileStream(DLLPath, FileMode.Open, FileAccess.Read))
             {
-                var dllImage = new PEImage(dllStream);
-
-                var dir = dllImage.PEHeader.ExportTableDirectory;
-                var offset = dllImage.RvaToOffset(Convert.ToInt32(dir.RelativeVirtualAddress));
-
-                // this is the placeholder for the final mapping of ordinal # to address map
-                Dictionary<int, ExportedSymbol> exports = null;
-
-                using (var mmf = MemoryMappedFile.CreateFromFile(dllStream, null, 0, MemoryMappedFileAccess.Read, null, HandleInheritability.None, false))
+                using (var dllImage = new PEImage(dllStream))
                 {
-                    using (var mmfAccessor = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
+                    var dir = dllImage.PEHeader.ExportTableDirectory;
+                    var offset = dllImage.RvaToOffset(Convert.ToInt32(dir.RelativeVirtualAddress));
+
+                    using (var mmf = MemoryMappedFile.CreateFromFile(dllStream, null, 0, MemoryMappedFileAccess.Read, null, HandleInheritability.None, false))
                     {
-                        mmfAccessor.Read(offset, out IMAGE_EXPORT_DIRECTORY exportDirectory);
-
-                        var count = exportDirectory.NumberOfFunctions;
-                        exports = new Dictionary<int, ExportedSymbol>(count);
-
-                        var namesOffset = exportDirectory.AddressOfNames != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfNames) : 0;
-                        var ordinalOffset = exportDirectory.AddressOfOrdinals != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfOrdinals) : 0;
-                        var functionsOffset = dllImage.RvaToOffset(exportDirectory.AddressOfFunctions);
-
-                        var ordinalBase = (int)exportDirectory.Base;
-
-                        for (uint funcOrdinal = 0; funcOrdinal < count; funcOrdinal++)
+                        using (var mmfAccessor = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
                         {
-                            // read function address
-                            var address = mmfAccessor.ReadUInt32(functionsOffset + funcOrdinal * 4);
+                            mmfAccessor.Read(offset, out ImageExportDirectory exportDirectory);
 
-                            if (0 != address)
+                            var count = exportDirectory.NumberOfFunctions;
+                            exports = new Dictionary<int, ExportedSymbol>(count);
+
+                            var namesOffset = exportDirectory.AddressOfNames != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfNames) : 0;
+                            var ordinalOffset = exportDirectory.AddressOfOrdinals != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfOrdinals) : 0;
+                            var functionsOffset = dllImage.RvaToOffset(exportDirectory.AddressOfFunctions);
+
+                            var ordinalBase = (int)exportDirectory.Base;
+
+                            for (uint funcOrdinal = 0; funcOrdinal < count; funcOrdinal++)
                             {
-                                exports.Add((int)(ordinalBase + funcOrdinal), new ExportedSymbol
+                                // read function address
+                                var address = mmfAccessor.ReadUInt32(functionsOffset + funcOrdinal * 4);
+
+                                if (0 != address)
                                 {
-                                    Name = string.Format("Ordinal{0}", ordinalBase + funcOrdinal),
-                                    Address = address
-                                });
+                                    exports.Add((int)(ordinalBase + funcOrdinal), new ExportedSymbol
+                                    {
+                                        Name = string.Format(CultureInfo.CurrentCulture,
+                                            "Ordinal{0}",
+                                            ordinalBase + funcOrdinal),
+                                        Address = address
+                                    });
+                                }
                             }
                         }
                     }
@@ -387,7 +422,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     if (TryObtainModuleOffset(virtAddress, out string moduleName, out uint offset))
                     {
                         // finalCallstack.AppendLine(ProcessFrameModuleOffset(moduleName, offset.ToString()));
-                        retval[frameNum] = string.Format("{0}+0x{1:X}", moduleName, offset);
+                        retval[frameNum] = string.Format(CultureInfo.CurrentCulture,
+                            "{0}+0x{1:X}",
+                            moduleName, offset);
                     }
                     else
                     {
@@ -410,7 +447,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// </summary>
         /// <param name="callStack"></param>
         /// <returns></returns>
-        private List<string> EnumModuleNames(string[] callStack)
+        private static List<string> EnumModuleNames(string[] callStack)
         {
             List<string> uniqueModuleNames = new List<string>();
             var reconstructedCallstack = new StringBuilder();
@@ -487,7 +524,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 var rva = a.relativeVirtualAddress;
 
                                 string offsetString = matchAlreadySymbolized.Groups["offset"].Value;
-                                int numberBase = offsetString.ToLowerInvariant().StartsWith("0x") ? 16 : 10;
+                                int numberBase = offsetString.ToUpperInvariant().StartsWith("0X", StringComparison.CurrentCulture) ? 16 : 10;
 
                                 uint offset = Convert.ToUInt32(offsetString, numberBase);
                                 rva += offset;
@@ -499,7 +536,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 // only if we found line number information should we append to output
                                 if (enumLineNums.count > 0)
                                 {
-                                    tmpsourceInfo = string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
+                                    tmpsourceInfo = string.Format(CultureInfo.CurrentCulture,
+                                        "({0}:{1})",
+                                        enumLineNums.Item(0).sourceFile.fileName,
+                                        enumLineNums.Item(0).lineNumber);
                                 }
 
                                 if (tmpOrdinal > 0)
@@ -507,7 +547,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                     finalCallstack.Append(" OR ");
                                 }
 
-                                finalCallstack.AppendFormat("{0}!{1}{2}\t{3}",
+                                finalCallstack.AppendFormat(CultureInfo.CurrentCulture,
+                                    "{0}!{1}{2}\t{3}",
                                     matchAlreadySymbolized.Groups["module"].Value,
                                     matchAlreadySymbolized.Groups["symbolizedfunc"].Value,
                                     includeOffsets ? "+" + offsetString : string.Empty,
@@ -573,7 +614,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <returns></returns>
         private bool TryObtainModuleOffset(ulong virtAddress, out string moduleName, out uint offset)
         {
-            var matchedModule = from mod in _loadedModules
+            var matchedModule = from mod in LoadedModules
                                 where (mod.BaseAddress <= virtAddress && virtAddress <= mod.EndAddress)
                                 select mod;
 
@@ -615,7 +656,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             // the offsets in the XE output are in hex, so we convert to base-10 accordingly
             var rva = Convert.ToUInt32(offset, 16);
-            var symKey = moduleName + rva.ToString();
+            var symKey = moduleName + rva.ToString(CultureInfo.CurrentCulture);
 
             string result = null;
             this.rwLockCachedSymbols.EnterReadLock();
@@ -708,7 +749,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             if (includeOffset)
             {
-                offsetStr = string.Format("+{0}", displacement);
+                offsetStr = string.Format(CultureInfo.CurrentCulture,
+                    "+{0}",
+                    displacement);
             }
 
             // try to find if we have source and line number info and include it based on the param
@@ -728,7 +771,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             sourceInfo += " -- WARN: multiple matches -- ";
                         }
 
-                        sourceInfo += string.Format("({0}:{1})", enumLineNums.Item(0).sourceFile.fileName, enumLineNums.Item(0).lineNumber);
+                        sourceInfo += string.Format(CultureInfo.CurrentCulture,
+                            "({0}:{1})",
+                            enumLineNums.Item(0).sourceFile.fileName,
+                            enumLineNums.Item(0).lineNumber);
                     }
                 }
                 else
@@ -743,7 +789,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             // make sure we cleanup COM allocations for the resolved sym
             Marshal.FinalReleaseComObject(mysym);
 
-            result = string.Format("{0}!{1}{2}\t{3}", moduleName, funcname2, offsetStr, sourceInfo).Trim();
+            result = string.Format(CultureInfo.CurrentCulture,
+                "{0}!{1}{2}\t{3}",
+                moduleName,
+                funcname2,
+                offsetStr,
+                sourceInfo).Trim();
 
             this.rwLockCachedSymbols.EnterWriteLock();
             if (!this.cachedSymbols.ContainsKey(symKey))
@@ -770,10 +821,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return true;
             }
 
-            _loadedModules.Clear();
+            LoadedModules.Clear();
 
-            var rgxmoduleaddress = new Regex(@"(?<filepath>.+)(\t+| +)(?<baseaddress>0x[0-9a-fA-F`]+)");
+            var rgxmoduleaddress = new Regex(
+                @"^\s*(?<filepath>.+)(\t+| +)(?<baseaddress>(0x)*[0-9a-fA-F`]+)\s*$",
+                RegexOptions.Multiline);
+
             var mcmodules = rgxmoduleaddress.Matches(baseAddressesString);
+
+            if (mcmodules.Count == 0)
+            {
+                // it is likely that we have malformed input, cannot ignore this so return false.
+                return false;
+            }
 
             try
             {
@@ -786,7 +846,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         EndAddress = ulong.MaxValue // stub this with an 'infinite' end address; only the highest loaded module will end up with this value finally
                     };
 
-                    _loadedModules.Add(newModule);
+                    LoadedModules.Add(newModule);
                 }
             }
             catch(FormatException)
@@ -801,13 +861,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             // sort them by base address
-            _loadedModules = (from mod in _loadedModules orderby mod.BaseAddress select mod).ToList();
+            LoadedModules = (from mod in LoadedModules orderby mod.BaseAddress select mod).ToList();
 
             // loop through the list, computing their end address
-            for (int moduleIndex = 1; moduleIndex < _loadedModules.Count; moduleIndex++)
+            for (int moduleIndex = 1; moduleIndex < LoadedModules.Count; moduleIndex++)
             {
                 // the previous modules end address will be current module's end address - 1 byte
-                _loadedModules[moduleIndex - 1].EndAddress = _loadedModules[moduleIndex].BaseAddress - 1;
+                LoadedModules[moduleIndex - 1].EndAddress = LoadedModules[moduleIndex].BaseAddress - 1;
             }
 
             return retVal;
@@ -823,7 +883,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="recurse"></param>
         /// <param name="moduleNames"></param>
         /// <param name="cachePDB">Cache a copy of PDBs into %TEMP%\SymCache</param>
-        private bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames, bool cachePDB)
+        private static bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames, bool cachePDB)
         {
             // loop through each module, trying to find matched PDB files
             var splitRootPaths = rootPaths.Split(';');
@@ -833,7 +893,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     // check if the PDB is already cached locally
                     var cachedPDBFile = Path.Combine(Path.GetTempPath(), "SymCache", currentModule + ".pdb");
-                    lock (this)
+                    lock (_syncRoot)
                     {
                         if (!File.Exists(cachedPDBFile))
                         {
@@ -842,7 +902,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 if (Directory.Exists(currPath))
                                 {
                                     var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                                    if (foundFiles.Count() > 0)
+                                    if (foundFiles.Any())
                                     {
                                         if (cachePDB)
                                         {
@@ -920,7 +980,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             var finalCallstack = new StringBuilder();
-            var xmldoc = new XmlDocument();
+            var xmldoc = new XmlDocument() { XmlResolver = null };
             bool isXMLdoc = false;
 
             // we evaluate if the input is XML containing multiple stacks
@@ -929,7 +989,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 this.PercentComplete = 0;
                 this.StatusMessage = "Inspecting input to determine processing plan...";
 
-                xmldoc.LoadXml(inputCallstackText);
+                using (var sreader = new StringReader(inputCallstackText))
+                {
+                    using (var reader = XmlReader.Create(sreader, new XmlReaderSettings() { XmlResolver = null }))
+                    {
+                        xmldoc.Load(reader);
+                    }
+                }
+
                 isXMLdoc = true;
             }
             catch (XmlException)
@@ -982,7 +1049,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                             var eventXMLMarkup = currstack.OuterXml.Replace("\r", string.Empty).Replace("\n", string.Empty);
 
-                            var candidatestack = string.Format("Event details: {0}:\r\n\r\n{1}", eventXMLMarkup, callstackText);
+                            var candidatestack = string.Format(CultureInfo.CurrentCulture,
+                                "Event details: {0}:{2}{2}{1}", eventXMLMarkup, callstackText, Environment.NewLine);
+
                             listOfCallStacks.Add(new StackWithCount()
                             {
                                 Callstack = candidatestack,
@@ -1010,8 +1079,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             return "Operation cancelled.";
                         }
 
-                        var slotcount = int.Parse(currstack.Attributes["count"].Value);
-                        var candidatestack = string.Format("Slot_{0}\t[count:{1}]:\r\n\r\n{2}", stacknum, slotcount, currstack.SelectSingleNode("./value[1]").InnerText);
+                        var slotcount = int.Parse(currstack.Attributes["count"].Value,
+                            CultureInfo.CurrentCulture);
+
+                        var candidatestack = string.Format(CultureInfo.CurrentCulture,
+                            "Slot_{0}\t[count:{1}]:{3}{3}{2}",
+                            stacknum, slotcount,
+                            currstack.SelectSingleNode("./value[1]").InnerText,
+                            Environment.NewLine);
+
                         listOfCallStacks.Add(new StackWithCount()
                         {
                             Callstack = candidatestack,
@@ -1148,6 +1224,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="obj"></param>
         private void ProcessCallStack(Object obj)
         {
+            SafeNativeMethods.EstablishActivationContext();
+
             var tp = (ThreadParams)obj;
 
             Dictionary<string, DiaUtil> _diautils = new Dictionary<string, DiaUtil>();
@@ -1169,7 +1247,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 // split the callstack into lines, and for each line try to resolve
                 string ordinalresolvedstack;
 
-                lock (this)
+                lock (_syncRoot)
                 {
                     ordinalresolvedstack = LoadDllsIfApplicable(currstack.Callstack, tp.searchDLLRecursively, tp.dllPaths);
                 }
@@ -1185,7 +1263,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 callStackLines = PreProcessVAs(callStackLines);
 
                 // locate the PDBs and populate their DIA session helper classes
-                if (LocateandLoadPDBs(_diautils, tp.symPath, tp.searchPDBsRecursively, EnumModuleNames(callStackLines), tp.cachePDB))
+                if (LocateandLoadPDBs(_diautils,
+                    tp.symPath,
+                    tp.searchPDBsRecursively,
+                    EnumModuleNames(callStackLines),
+                    tp.cachePDB))
                 {
                     // resolve symbols by using DIA
                     currstack.Resolvedstack = ResolveSymbols(_diautils,
@@ -1212,6 +1294,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     diautil.Dispose();
                 }
             }
+
+            SafeNativeMethods.DestroyActivationContext();
         }
 
         /// <summary>
@@ -1220,9 +1304,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="dllSearchPath"></param>
         /// <param name="recurse"></param>
         /// <returns></returns>
-        public List<Symbol> GetSymbolDetailsForBinaries(string dllSearchPath, bool recurse)
+        public static List<Symbol> GetSymbolDetailsForBinaries(List<string> dllPaths, bool recurse)
         {
-            if (string.IsNullOrEmpty(dllSearchPath))
+            if (dllPaths == null || dllPaths.Count == 0)
             {
                 return new List<Symbol>();
             }
@@ -1233,10 +1317,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             foreach (var currentModule in moduleNames)
             {
-                var splitRootPaths = dllSearchPath.Split(';');
                 string finalFilePath = null;
 
-                foreach (var currPath in splitRootPaths)
+                foreach (var currPath in dllPaths)
                 {
                     if (!Directory.Exists(currPath))
                     {
@@ -1247,7 +1330,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                      where f.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) || f.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase)
                                      select f;
 
-                    if (foundFiles.Count() > 0)
+                    if (foundFiles.Any())
                     {
                         finalFilePath = foundFiles.First();
                         break;
@@ -1258,30 +1341,35 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     using (var dllFileStream = new FileStream(finalFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
-                        var dllImage = new PEImage(dllFileStream, false);
-
-                        var internalPDBName = dllImage.DefaultPdb.Path;
-                        var pdbGuid = dllImage.DefaultPdb.Guid;
-                        var pdbAge = dllImage.DefaultPdb.Revision;
-
-                        var usablePDBName = Path.GetFileNameWithoutExtension(internalPDBName);
-
-                        var newSymbol = new Symbol()
+                        using (var dllImage = new PEImage(dllFileStream, false))
                         {
-                            PDBName = usablePDBName,
 
-                            InternalPDBName = internalPDBName,
+                            var internalPDBName = dllImage.DefaultPdb.Path;
+                            var pdbGuid = dllImage.DefaultPdb.Guid;
+                            var pdbAge = dllImage.DefaultPdb.Revision;
 
-                            DownloadURL = string.Format(@"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb",
-                                usablePDBName,
-                                pdbGuid.ToString("N") + pdbAge.ToString()),
+                            var usablePDBName = Path.GetFileNameWithoutExtension(internalPDBName);
 
-                            FileVersion = dllImage.GetFileVersionInfo().FileVersion
-                        };
+                            var newSymbol = new Symbol()
+                            {
+                                PDBName = usablePDBName,
 
-                        newSymbol.DownloadVerified = Symbol.IsURLValid(newSymbol.DownloadURL);
+                                InternalPDBName = internalPDBName,
 
-                        symbolsFound.Add(newSymbol);
+                                DownloadURL = string.Format(
+                                    CultureInfo.CurrentCulture,
+                                    @"https://msdl.microsoft.com/download/symbols/{0}.pdb/{1}/{0}.pdb",
+                                    usablePDBName,
+                                    pdbGuid.ToString("N", CultureInfo.CurrentCulture) + 
+                                    pdbAge.ToString(CultureInfo.CurrentCulture)),
+
+                                FileVersion = dllImage.GetFileVersionInfo().FileVersion
+                            };
+
+                            newSymbol.DownloadVerified = Symbol.IsURLValid(new Uri(newSymbol.DownloadURL));
+
+                            symbolsFound.Add(newSymbol);
+                        }
                     }
                 }
             }
@@ -1307,6 +1395,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

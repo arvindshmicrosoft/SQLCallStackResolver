@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------------
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2019 Arvind Shyamsundar
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Newtonsoft.Json;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -55,7 +56,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public override string ToString()
         {
-            return string.Format($"{ProductMajorVersion} {ProductLevel} {Label} - {BuildNumber} - {MachineType} ({KBInfo})");
+            return string.Format(CultureInfo.CurrentCulture,
+                $"{ProductMajorVersion} {ProductLevel} {Label} - {BuildNumber} - {MachineType} ({KBInfo})");
         }
 
         public static SortedDictionary<string, SQLBuildInfo> GetSqlBuildInfo(string jsonFile)
@@ -109,26 +111,34 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public static void SaveSqlBuildInfo(List<SQLBuildInfo> allBuilds, string jsonFile)
         {
-            using (var fs = new FileStream(jsonFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+            if (allBuilds != null)
             {
-                using (var wrtr = new StreamWriter(fs))
+                using (var fs = new FileStream(jsonFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
                 {
-                    foreach (var bld in allBuilds)
+                    using (var wrtr = new StreamWriter(fs))
                     {
-                        wrtr.WriteLine(JsonConvert.SerializeObject(bld));
-                    }
+                        foreach (var bld in allBuilds)
+                        {
+                            wrtr.WriteLine(JsonConvert.SerializeObject(bld));
+                        }
 
-                    wrtr.Flush();
-                    wrtr.Close();
+                        wrtr.Flush();
+                        wrtr.Close();
+                    }
                 }
             }
         }
 
         public static string GetDownloadScriptPowerShell(SQLBuildInfo bld, bool includeMarkdown)
         {
+            if (bld is null)
+            {
+                return string.Empty;
+            }
+
             var symcmds = new StringBuilder();
 
-            if (null != bld.SymbolDetails && bld.SymbolDetails.Where(s => s.DownloadVerified).Count() > 0)
+            if (null != bld.SymbolDetails && bld.SymbolDetails.Where(s => s.DownloadVerified).Any())
             {
                 if (includeMarkdown)
                 {
@@ -142,7 +152,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     if (!sym.DownloadVerified) continue;
 
-                    symcmds.AppendLine($"Invoke-WebRequest -uri '{sym.DownloadURL}' -OutFile \"$outputFolder\\{sym.PDBName}.pdb\" # File version {sym.FileVersion}");
+                    symcmds.AppendLine($"if (-not (Test-Path \"$outputFolder\\{sym.PDBName}.pdb\")) {{ Invoke-WebRequest -uri '{sym.DownloadURL}' -OutFile \"$outputFolder\\{sym.PDBName}.pdb\" }} # File version {sym.FileVersion}");
                 }
 
                 if (includeMarkdown) symcmds.AppendLine("```");

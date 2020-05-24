@@ -25,6 +25,6 @@ jobs:
       working-directory: Tests\TestCases
       shell: powershell
     - name: Run tests
-      run: .\SQLCallStackResolver.Tests.exe
+      run: ..\..\packages\xunit.runner.console.2.4.1\tools\net472\xunit.console.exe .\SQLCalLStackResolver.xUnit.Tests.dll -verbose
       working-directory: Target\Release
       shell: powershell

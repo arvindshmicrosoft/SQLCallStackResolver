@@ -1,6 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <!--
 The MIT License(MIT)
+
 
     Copyright(c) Arvind Shyamsundar
 
@@ -30,17 +31,11 @@ The MIT License(MIT)
     business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
     to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
     -->
-<configuration>
-  <runtime>
-    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
-      <dependentAssembly>
-        <assemblyIdentity name="System.Runtime.CompilerServices.Unsafe" publicKeyToken="b03f5f7f11d50a3a" culture="neutral" />
-        <bindingRedirect oldVersion="0.0.0.0-4.0.6.0" newVersion="4.0.6.0" />
-      </dependentAssembly>
-      <dependentAssembly>
-        <assemblyIdentity name="System.Buffers" publicKeyToken="cc7b13ffcd2ddd51" culture="neutral" />
-        <bindingRedirect oldVersion="0.0.0.0-4.0.3.0" newVersion="4.0.3.0" />
-      </dependentAssembly>
-    </assemblyBinding>
-  </runtime>
-</configuration>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <assemblyIdentity name = "SQLCallStackResolver.Engine" version="2.0.0.0" />
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity type="win32" processorArchitecture="amd64" name="msdia140.dll" version="1.0.0.0" />
+    </dependentAssembly>
+  </dependency>
+</assembly>

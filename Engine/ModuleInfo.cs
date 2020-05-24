@@ -1,8 +1,7 @@
 ﻿//------------------------------------------------------------------------------
-//<copyright company="Microsoft">
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2017 Microsoft
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -28,15 +27,16 @@
 //    be liable for any damages whatsoever (including, without limitation, damages for loss of business profits,
 //    business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
-//</copyright>
 //------------------------------------------------------------------------------
+
+using System.Globalization;
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     /// <summary>
     /// Helper class to store module name, start and end address
     /// </summary>
-    class ModuleInfo
+    public class ModuleInfo
     {
         public string ModuleName;
         public ulong BaseAddress;
@@ -44,7 +44,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public override string ToString()
         {
-            return string.Format("{0} from {1:X} to {2:X}", ModuleName, BaseAddress, EndAddress);
+            return string.Format(CultureInfo.CurrentCulture,
+                "{0} from {1:X} to {2:X}",
+                ModuleName,
+                BaseAddress,
+                EndAddress);
         }
     }
 }

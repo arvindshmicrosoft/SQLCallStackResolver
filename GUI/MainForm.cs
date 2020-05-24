@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------------
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2019 Arvind Shyamsundar
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -51,9 +51,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             InitializeComponent();
         }
 
-    private StackResolver _resolver = new StackResolver();
+        private StackResolver _resolver = new StackResolver();
         private Task<string> backgroundTask;
-        private CancellationTokenSource backgroundCTS;
+        private CancellationTokenSource backgroundCTS { get; set; }
         private CancellationToken backgroundCT;
 
         private string _baseAddressesString = null;
@@ -145,19 +145,20 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void EnterBaseAddresses_Click(object sender, EventArgs e)
         {
-            var baseAddressForm = new MultilineInput(this._baseAddressesString, true);
-            DialogResult res = baseAddressForm.ShowDialog(this);
+            using (var baseAddressForm = new MultilineInput(this._baseAddressesString, true))
+            {
+                DialogResult res = baseAddressForm.ShowDialog(this);
 
-            if (res == DialogResult.OK)
-            {
-                this._baseAddressesString = baseAddressForm.baseaddressesstring;
-            }
-            else
-            {
-                return;
+                if (res == DialogResult.OK)
+                {
+                    this._baseAddressesString = baseAddressForm.baseaddressesstring;
+                }
+                else
+                {
+                    return;
+                }
             }
         }
-
         private void CallStackInput_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.A)
@@ -178,7 +179,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             this.ShowStatus("Getting PDB download script... please wait. This may take a while!");
 
-            var symDetails = this._resolver.GetSymbolDetailsForBinaries(binaryPaths.Text,
+            var symDetails = StackResolver.GetSymbolDetailsForBinaries(binaryPaths.Text.Split(';').ToList(),
                 DLLrecurse.Checked);
 
             if (0 == symDetails.Count)
@@ -195,8 +196,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             this.ShowStatus(string.Empty);
 
-            var outputCmds = new MultilineInput(downloadCmds.ToString(), false);
-            outputCmds.ShowDialog(this);
+            using (var outputCmds = new MultilineInput(downloadCmds.ToString(CultureInfo.CurrentCulture), false))
+            {
+                outputCmds.ShowDialog(this);
+            }
         }
 
         private void ShowStatus(string txt)
@@ -222,7 +225,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 this.backgroundTask = Task.Run(() =>
                 {
-                    return this._resolver.ExtractFromXEL(genericOpenFileDlg.FileNames, BucketizeXEL.Checked);
+                    return this._resolver.ExtractFromXEL(genericOpenFileDlg.FileNames, BucketizeXEL.Checked).Item2;
                 });
 
                 this.MonitorBackgroundTask(backgroundTask);
@@ -235,31 +238,33 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void MonitorBackgroundTask(Task backgroundTask)
         {
-            backgroundCTS = new CancellationTokenSource();
-            backgroundCT = backgroundCTS.Token;
-
-            this.EnableCancelButton();
-
-            while (!backgroundTask.Wait(30))
+            using (backgroundCTS = new CancellationTokenSource())
             {
-                if (backgroundCT.IsCancellationRequested)
+                backgroundCT = backgroundCTS.Token;
+
+                this.EnableCancelButton();
+
+                while (!backgroundTask.Wait(30))
                 {
-                    this._resolver.CancelRunningTasks();
+                    if (backgroundCT.IsCancellationRequested)
+                    {
+                        this._resolver.CancelRunningTasks();
+                    }
+
+                    this.ShowStatus(_resolver.StatusMessage);
+                    this.progressBar.Value = _resolver.PercentComplete;
+                    this.statusStrip1.Refresh();
+                    Application.DoEvents();
                 }
 
+                // refresh it one last time to ensure that the last status message is displayed
                 this.ShowStatus(_resolver.StatusMessage);
                 this.progressBar.Value = _resolver.PercentComplete;
                 this.statusStrip1.Refresh();
                 Application.DoEvents();
+
+                this.DisableCancelButton();
             }
-
-            // refresh it one last time to ensure that the last status message is displayed
-            this.ShowStatus(_resolver.StatusMessage);
-            this.progressBar.Value = _resolver.PercentComplete;
-            this.statusStrip1.Refresh();
-            Application.DoEvents();
-
-            this.DisableCancelButton();
         }
 
         private void CallStackInput_DragDrop(object sender, DragEventArgs e)
@@ -275,11 +280,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                     // sample the first file selected and if it is XEL assume all the files are XEL
                     // if there is any other format in between, it will be rejected by the ExtractFromXEL code
-                    if (Path.GetExtension(files[0]).ToLower() == ".xel")
+                    if (Path.GetExtension(files[0]).ToLower(CultureInfo.CurrentCulture) == ".xel")
                     {
                         this.ShowStatus("XEL file was dragged; please wait while we extract events from the file");
 
-                        allFilesContent.AppendLine(this._resolver.ExtractFromXEL(files, BucketizeXEL.Checked));
+                        allFilesContent.AppendLine(this._resolver.ExtractFromXEL(files, BucketizeXEL.Checked).Item2);
 
                         this.ShowStatus(string.Empty);
                     }
@@ -341,14 +346,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void SelectSQLPDB_Click(object sender, EventArgs e)
         {
-            var sqlbuildsForm = new SQLBuildsForm
+            using (var sqlbuildsForm = new SQLBuildsForm
             {
-                pathToPDBs = System.Configuration.ConfigurationManager.AppSettings["PDBDownloadFolder"]
-            };
+                pathToPDBs = ConfigurationManager.AppSettings["PDBDownloadFolder"]
+            })
+            {
+                DialogResult res = sqlbuildsForm.ShowDialog(this);
 
-            DialogResult res = sqlbuildsForm.ShowDialog(this);
-
-            this.pdbPaths.AppendText((pdbPaths.TextLength == 0 ? string.Empty : ";") + sqlbuildsForm.lastDownloadedSymFolder);
+                this.pdbPaths.AppendText((pdbPaths.TextLength == 0 ? string.Empty : ";") + sqlbuildsForm.lastDownloadedSymFolder);
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -365,7 +371,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             foreach (var url in sqlBuildInfoUpdateURLs)
             {
                 HttpWebResponse httpResp = null;
-                var httpReq = (HttpWebRequest) WebRequest.Create(url);
+                var httpReq = (HttpWebRequest) WebRequest.Create(new Uri(url));
 
                 try
                 {
@@ -398,7 +404,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 foreach (var jsonURL in sqlBuildInfoURLs)
                                 {
                                     httpResp = null;
-                                    httpReq = (HttpWebRequest)WebRequest.Create(jsonURL);
+                                    httpReq = (HttpWebRequest)WebRequest.Create(new Uri(jsonURL));
 
                                     try
                                     {
