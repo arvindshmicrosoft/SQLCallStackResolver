@@ -28,27 +28,27 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.treeviewSyms = new System.Windows.Forms.TreeView();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.downloadStatus = new System.Windows.Forms.ToolStripStatusLabel();
             this.downloadProgress = new System.Windows.Forms.ToolStripProgressBar();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.checkPDBAvail = new System.Windows.Forms.Button();
             this.dnldButton = new System.Windows.Forms.Button();
+            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.treeviewSyms = new System.Windows.Forms.TreeView();
+            this.searchLabel = new System.Windows.Forms.Label();
+            this.searchText = new System.Windows.Forms.TextBox();
+            this.findNext = new System.Windows.Forms.Button();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
+            this.splitContainer2.Panel1.SuspendLayout();
+            this.splitContainer2.Panel2.SuspendLayout();
+            this.splitContainer2.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // treeviewSyms
-            // 
-            this.treeviewSyms.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeviewSyms.Location = new System.Drawing.Point(0, 0);
-            this.treeviewSyms.Name = "treeviewSyms";
-            this.treeviewSyms.Size = new System.Drawing.Size(411, 474);
-            this.treeviewSyms.TabIndex = 0;
             // 
             // statusStrip1
             // 
@@ -56,52 +56,52 @@
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.downloadStatus,
             this.downloadProgress});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 522);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 645);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 10, 0);
-            this.statusStrip1.Size = new System.Drawing.Size(411, 22);
+            this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 13, 0);
+            this.statusStrip1.Size = new System.Drawing.Size(548, 25);
             this.statusStrip1.TabIndex = 2;
             this.statusStrip1.Text = "statusStrip1";
             // 
             // downloadStatus
             // 
             this.downloadStatus.Name = "downloadStatus";
-            this.downloadStatus.Size = new System.Drawing.Size(0, 17);
+            this.downloadStatus.Size = new System.Drawing.Size(0, 19);
             // 
             // downloadProgress
             // 
             this.downloadProgress.Name = "downloadProgress";
-            this.downloadProgress.Size = new System.Drawing.Size(75, 16);
+            this.downloadProgress.Size = new System.Drawing.Size(100, 17);
             // 
             // splitContainer1
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainer1.IsSplitterFixed = true;
             this.splitContainer1.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.splitContainer1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.splitContainer1.Name = "splitContainer1";
             this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
             // splitContainer1.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.treeviewSyms);
+            this.splitContainer1.Panel1.Controls.Add(this.splitContainer2);
             // 
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.checkPDBAvail);
             this.splitContainer1.Panel2.Controls.Add(this.dnldButton);
-            this.splitContainer1.Size = new System.Drawing.Size(411, 544);
-            this.splitContainer1.SplitterDistance = 474;
-            this.splitContainer1.SplitterWidth = 3;
+            this.splitContainer1.Size = new System.Drawing.Size(548, 670);
+            this.splitContainer1.SplitterDistance = 600;
             this.splitContainer1.TabIndex = 3;
             // 
             // checkPDBAvail
             // 
             this.checkPDBAvail.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.checkPDBAvail.Location = new System.Drawing.Point(66, 12);
-            this.checkPDBAvail.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.checkPDBAvail.Location = new System.Drawing.Point(88, 7);
+            this.checkPDBAvail.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.checkPDBAvail.Name = "checkPDBAvail";
-            this.checkPDBAvail.Size = new System.Drawing.Size(128, 26);
+            this.checkPDBAvail.Size = new System.Drawing.Size(171, 32);
             this.checkPDBAvail.TabIndex = 3;
             this.checkPDBAvail.Text = "Check PDB availability";
             this.checkPDBAvail.UseVisualStyleBackColor = true;
@@ -111,23 +111,81 @@
             // 
             this.dnldButton.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.dnldButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.dnldButton.Location = new System.Drawing.Point(199, 12);
-            this.dnldButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.dnldButton.Location = new System.Drawing.Point(265, 7);
+            this.dnldButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.dnldButton.Name = "dnldButton";
-            this.dnldButton.Size = new System.Drawing.Size(142, 26);
+            this.dnldButton.Size = new System.Drawing.Size(189, 32);
             this.dnldButton.TabIndex = 2;
             this.dnldButton.Text = "Download PDBs";
             this.dnldButton.UseVisualStyleBackColor = true;
             this.dnldButton.Click += new System.EventHandler(this.DownloadPDBs);
             // 
+            // splitContainer2
+            // 
+            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer2.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainer2.IsSplitterFixed = true;
+            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer2.Name = "splitContainer2";
+            this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer2.Panel1
+            // 
+            this.splitContainer2.Panel1.Controls.Add(this.findNext);
+            this.splitContainer2.Panel1.Controls.Add(this.searchText);
+            this.splitContainer2.Panel1.Controls.Add(this.searchLabel);
+            // 
+            // splitContainer2.Panel2
+            // 
+            this.splitContainer2.Panel2.Controls.Add(this.treeviewSyms);
+            this.splitContainer2.Size = new System.Drawing.Size(548, 600);
+            this.splitContainer2.SplitterDistance = 35;
+            this.splitContainer2.TabIndex = 0;
+            // 
+            // treeviewSyms
+            // 
+            this.treeviewSyms.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeviewSyms.Location = new System.Drawing.Point(0, 0);
+            this.treeviewSyms.Margin = new System.Windows.Forms.Padding(4);
+            this.treeviewSyms.Name = "treeviewSyms";
+            this.treeviewSyms.Size = new System.Drawing.Size(548, 561);
+            this.treeviewSyms.TabIndex = 1;
+            // 
+            // searchLabel
+            // 
+            this.searchLabel.AutoSize = true;
+            this.searchLabel.Location = new System.Drawing.Point(10, 12);
+            this.searchLabel.Name = "searchLabel";
+            this.searchLabel.Size = new System.Drawing.Size(150, 17);
+            this.searchLabel.TabIndex = 0;
+            this.searchLabel.Text = "SQL version / keyword";
+            // 
+            // searchText
+            // 
+            this.searchText.Location = new System.Drawing.Point(166, 9);
+            this.searchText.Name = "searchText";
+            this.searchText.Size = new System.Drawing.Size(296, 22);
+            this.searchText.TabIndex = 1;
+            // 
+            // findNext
+            // 
+            this.findNext.Location = new System.Drawing.Point(468, 9);
+            this.findNext.Name = "findNext";
+            this.findNext.Size = new System.Drawing.Size(75, 23);
+            this.findNext.TabIndex = 2;
+            this.findNext.Text = "Find";
+            this.findNext.UseVisualStyleBackColor = true;
+            this.findNext.Click += new System.EventHandler(this.findNext_Click);
+            // 
             // SQLBuildsForm
             // 
             this.AcceptButton = this.dnldButton;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(411, 544);
+            this.ClientSize = new System.Drawing.Size(548, 670);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.splitContainer1);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "SQLBuildsForm";
@@ -140,19 +198,27 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.splitContainer2.Panel1.ResumeLayout(false);
+            this.splitContainer2.Panel1.PerformLayout();
+            this.splitContainer2.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
+            this.splitContainer2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.TreeView treeviewSyms;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel downloadStatus;
         private System.Windows.Forms.ToolStripProgressBar downloadProgress;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Button dnldButton;
         private System.Windows.Forms.Button checkPDBAvail;
+        private System.Windows.Forms.SplitContainer splitContainer2;
+        private System.Windows.Forms.TreeView treeviewSyms;
+        private System.Windows.Forms.TextBox searchText;
+        private System.Windows.Forms.Label searchLabel;
+        private System.Windows.Forms.Button findNext;
     }
 }

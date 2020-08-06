@@ -80,10 +80,42 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return;
             }
 
+            int numLinesOfInput = callStackInput.Text.Length - callStackInput.Text.Replace(Environment.NewLine, string.Empty).Length;
+
+            if (1 == numLinesOfInput && !FramesOnSingleLine.Checked)
+            {
+                if (DialogResult.Yes == MessageBox.Show(this,
+                    "Maybe this is intentional, but your input seems to have all the frames on a single line, but the 'Callstack frames are in single line' checkbox is unchecked. " +
+                    "This may cause problems resolving symbols. Would you like to enable this?",
+                    "Enable the 'frames on single line' option?",
+                    MessageBoxButtons.YesNo))
+                {
+                    FramesOnSingleLine.Checked = true;
+                    FramesOnSingleLine.Refresh();
+                    this.Refresh();
+                    Application.DoEvents();
+                }
+            }
+
+            if (numLinesOfInput > 1 && FramesOnSingleLine.Checked)
+            {
+                if (DialogResult.Yes == MessageBox.Show(this,
+                    "Your input seems to have multiple lines, but the 'Callstack frames are in single line' checkbox is checked. " +
+                    "This may cause problems resolving symbols. Would you like to uncheck this setting?",
+                    "Disable the 'frames on single line' option?",
+                    MessageBoxButtons.YesNo))
+                {
+                    FramesOnSingleLine.Checked = false;
+                    FramesOnSingleLine.Refresh();
+                    this.Refresh();
+                    Application.DoEvents();
+                }
+            }
+
             if (!pdbPaths.Text.Contains(@"\\") && cachePDB.Checked)
             {
                 if (DialogResult.Yes == MessageBox.Show(this,
-                    "Cache PDBs is only recommended when getting symbols from UNC paths.\r\n" +
+                    "Cache PDBs is only recommended when getting symbols from UNC paths. " +
                     "Would you like to disable this?",
                     "Disable symbol file cache?",
                     MessageBoxButtons.YesNo))
@@ -98,7 +130,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             if (pdbPaths.Text.Contains(@"\\") && !cachePDB.Checked)
             {
                 if (DialogResult.Yes == MessageBox.Show(this,
-                    "When getting symbols from UNC paths, SQLCallStackResolver can temporary cache a copy when resolving symbols. This may speed things up especially when the UNC path is over a WAN and when you have a number of callstacks to resolve.\r\n" +
+                    "When getting symbols from UNC paths, SQLCallStackResolver can temporary cache a copy when resolving symbols. " +
+                    "This may speed things up especially when the UNC path is over a WAN and when you have a number of callstacks to resolve. " +
                     "Would you like to enable this?",
                     "Enable symbol file cache?",
                     MessageBoxButtons.YesNo))

@@ -60,15 +60,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             var sqlMajorVersions = allBuilds.Values.Select(b => b.ProductMajorVersion).
                 OrderByDescending(b => b).Distinct();
 
-            treeviewSyms.Nodes.AddRange(sqlMajorVersions.Select(b => new TreeNode(b) { Name = b } ).ToArray());
+            treeviewSyms.Nodes.AddRange(sqlMajorVersions.Select(b => new TreeNode(b) { Name = b }).ToArray());
 
             // within each major version, get product levels (RTM, SP1 etc.)
-            foreach(var ver in sqlMajorVersions)
+            foreach (var ver in sqlMajorVersions)
             {
                 var prodLevels = allBuilds.Values.Where(b => b.ProductMajorVersion == ver).
                     Select(b => b.ProductLevel).OrderByDescending(b => b).Distinct();
 
-                treeviewSyms.Nodes[ver].Nodes.AddRange(prodLevels.Select(pl => new TreeNode(pl) { Name = pl } ).ToArray());
+                treeviewSyms.Nodes[ver].Nodes.AddRange(prodLevels.Select(pl => new TreeNode(pl) { Name = pl }).ToArray());
 
                 // finally within each product level get the individual builds
                 foreach (var pl in prodLevels)
@@ -86,8 +86,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             if (treeviewSyms.SelectedNode.Tag is SQLBuildInfo bld)
             {
-                // MessageBox.Show(treeView1.SelectedNode.Name + string.Join(",", bld.PDBUrls));
-
                 if (bld.SymbolDetails.Count > 0)
                 {
                     dnldButton.Enabled = false;
@@ -151,6 +149,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void CheckPDBAvail_Click(object sender, EventArgs e)
         {
+            if (treeviewSyms.SelectedNode is null)
+            {
+                return;
+            }
+
             if (treeviewSyms.SelectedNode.Tag is SQLBuildInfo bld)
             {
                 if (bld.SymbolDetails.Count > 0)
@@ -179,6 +182,48 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     }
                 }
             }
+        }
+
+        private void findNext_Click(object sender, EventArgs e)
+        {
+            foreach (TreeNode node in treeviewSyms.Nodes)
+            {
+                if (CheckIfAnyNodesMatch(node))
+                {
+                    return;
+                }
+            }
+
+            downloadStatus.Text = "No matches found.";
+
+            treeviewSyms.SelectedNode = null;
+            treeviewSyms.Refresh();
+            Application.DoEvents();
+        }
+
+        private bool CheckIfAnyNodesMatch(TreeNode node)
+        {
+            if (node.Tag is SQLBuildInfo bld)
+            {
+                if (bld.ToString().ToLower(CultureInfo.CurrentCulture).Contains(searchText.Text.ToLower(CultureInfo.CurrentCulture)))
+                {
+                    treeviewSyms.SelectedNode = node;
+                    treeviewSyms.Select();
+                    treeviewSyms.Refresh();
+                    Application.DoEvents();
+                    return true;
+                }
+            }
+
+            foreach (TreeNode child in node.Nodes)
+            {
+                if (CheckIfAnyNodesMatch(child))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
