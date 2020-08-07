@@ -1,8 +1,7 @@
 ﻿//------------------------------------------------------------------------------
-//<copyright company="Microsoft">
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2017 Microsoft
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -28,13 +27,11 @@
 //    be liable for any damages whatsoever (including, without limitation, damages for loss of business profits,
 //    business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
-//</copyright>
 //------------------------------------------------------------------------------
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Dia;
-    using System;
     using System.Runtime.InteropServices;
 
     /// <summary>
@@ -45,12 +42,33 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         public IDiaDataSource _IDiaDataSource;
         public IDiaSession _IDiaSession;
         private bool disposedValue = false;
+        public bool HasSourceInfo = false;
 
         public DiaUtil(string pdbName)
         {
             _IDiaDataSource = new DiaSource();
             _IDiaDataSource.loadDataFromPdb(pdbName);
             _IDiaDataSource.openSession(out _IDiaSession);
+
+            this._IDiaSession.findChildrenEx(this._IDiaSession.globalScope,
+                SymTagEnum.SymTagFunction,
+                null,
+                0,
+                out IDiaEnumSymbols matchedSyms);
+
+            foreach(IDiaSymbol sym in matchedSyms)
+            {
+                this._IDiaSession.findLinesByRVA(sym.relativeVirtualAddress,
+                    (uint) sym.length,
+                    out IDiaEnumLineNumbers enumLineNums);
+
+                if (enumLineNums.count > 0)
+                {
+                    // this PDB has at least 1 function with source info, so end the search
+                    HasSourceInfo = true;
+                    break;
+                }
+            }
         }
 
         public void Dispose()

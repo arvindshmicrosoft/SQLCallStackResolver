@@ -249,6 +249,11 @@ ModelManifest.xml
 /docs/SQLSat696/Demos/LOCK_HASH/perfmonsettings.htm
 /docs/SQLSat696/Demos/Private
 /Tests/TestCases/TestOrdinal/sqldk.dll
+/SQLCallstackResolver.Downloader
+/SQLBuilds.xlsx
 /Downloader
 /sqlbuildinfo.zip
-/SQLBuilds.xlsx
+/Downloader
+/Tests/TestCases/ImportXEL/*.xel
+/TestResults/
+Tests/TestCases/ImportXEL/base_addresses.txt

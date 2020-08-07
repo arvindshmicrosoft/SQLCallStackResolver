@@ -1,8 +1,7 @@
 ﻿//------------------------------------------------------------------------------
-//<copyright company="Microsoft">
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2017 Microsoft
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -28,29 +27,28 @@
 //    be liable for any damages whatsoever (including, without limitation, damages for loss of business profits,
 //    business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
-//</copyright>
 //------------------------------------------------------------------------------
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
-    using System.Runtime.InteropServices;
+    using System;
+    using System.Windows.Forms;
 
-    /// <summary>
-    /// PE header's Image Export Directory
-    /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct IMAGE_EXPORT_DIRECTORY
+    static class Program
     {
-        public uint Characteristics;
-        public uint TimeDateStamp;
-        public ushort MajorVersion;
-        public ushort MinorVersion;
-        public int Name;
-        public int Base;
-        public int NumberOfFunctions;
-        public int NumberOfNames;
-        public int AddressOfFunctions;
-        public int AddressOfNames;    
-        public int AddressOfOrdinals;                                 
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            using (var mainForm = new MainForm())
+            {
+                Application.Run(mainForm);
+            }
+        }
     }
 }

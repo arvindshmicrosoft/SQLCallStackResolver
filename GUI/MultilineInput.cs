@@ -1,8 +1,7 @@
 ﻿//------------------------------------------------------------------------------
-//<copyright company="Microsoft">
 //    The MIT License (MIT)
 //    
-//    Copyright (c) 2017 Microsoft
+//    Copyright (c) Arvind Shyamsundar
 //    
 //    Permission is hereby granted, free of charge, to any person obtaining a copy
 //    of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +27,6 @@
 //    be liable for any damages whatsoever (including, without limitation, damages for loss of business profits,
 //    business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
-//</copyright>
 //------------------------------------------------------------------------------
 
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
@@ -39,12 +37,21 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
     public partial class MultilineInput : Form
     {
-        public MultilineInput(string initialtext)
+        public MultilineInput(string initialtext, bool showFilepicker)
         {
             InitializeComponent();
             if (!string.IsNullOrEmpty(initialtext))
             {
                 this.InputAddresses.Text = initialtext;
+            }
+
+            if (showFilepicker)
+            {
+                loadFromFile.Visible = true;
+            }
+            else
+            {
+                loadFromFile.Visible = false;
             }
         }
 
@@ -90,6 +97,23 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 e.Effect = DragDropEffects.Copy;
             else
                 e.Effect = DragDropEffects.None;
+        }
+
+        private void loadFromFile_Click(object sender, System.EventArgs e)
+        {
+            fileDlg.Multiselect = false;
+            fileDlg.CheckPathExists = true;
+            fileDlg.CheckFileExists = true;
+            fileDlg.FileName = string.Empty;
+            fileDlg.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            fileDlg.Title = "Select file";
+
+            var res = fileDlg.ShowDialog(this);
+
+            if (res != DialogResult.Cancel)
+            {
+                InputAddresses.Text = File.ReadAllText(fileDlg.FileName);
+            }
         }
     }
 }
