@@ -180,6 +180,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             using (var baseAddressForm = new MultilineInput(this._baseAddressesString, true))
             {
+                baseAddressForm.StartPosition = FormStartPosition.CenterParent;
                 DialogResult res = baseAddressForm.ShowDialog(this);
 
                 if (res == DialogResult.OK)
@@ -231,6 +232,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             using (var outputCmds = new MultilineInput(downloadCmds.ToString(CultureInfo.CurrentCulture), false))
             {
+                outputCmds.StartPosition = FormStartPosition.CenterParent;
                 outputCmds.ShowDialog(this);
             }
         }
@@ -384,6 +386,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 pathToPDBs = ConfigurationManager.AppSettings["PDBDownloadFolder"]
             })
             {
+                sqlbuildsForm.StartPosition = FormStartPosition.CenterParent;
                 DialogResult res = sqlbuildsForm.ShowDialog(this);
 
                 this.pdbPaths.AppendText((pdbPaths.TextLength == 0 ? string.Empty : ";") + sqlbuildsForm.lastDownloadedSymFolder);
