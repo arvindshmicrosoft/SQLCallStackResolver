@@ -423,7 +423,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     {
                         using (var strm = new StreamReader(httpResp.GetResponseStream()))
                         {
-                            string lastUpd = strm.ReadToEnd();
+                            string lastUpd = strm.ReadToEnd().Trim();
                             lastUpdDateTime = DateTime.ParseExact(lastUpd, "yyyy-MM-dd HH:mm", new CultureInfo("en-US"));
                         }
 
