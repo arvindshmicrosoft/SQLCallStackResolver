@@ -84,6 +84,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void DownloadPDBs(object sender, EventArgs e)
         {
+            if (treeviewSyms.SelectedNode is null)
+            {
+                return;
+            }
+
             if (treeviewSyms.SelectedNode.Tag is SQLBuildInfo bld)
             {
                 if (bld.SymbolDetails.Count > 0)
