@@ -58,6 +58,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private string _baseAddressesString = null;
         internal static string SqlBuildInfoFileName = @"sqlbuildinfo.json";
+        internal static string LastUpdatedTimestampFileName = @"lastupdated.txt";
+        internal static string LastUpdatedTimestampFormat = "yyyy-MM-dd HH:mm";
+        internal static string LastUpdatedTimestampCulture = "en-US";
 
         private void ResolveCallstacks_Click(object sender, EventArgs e)
         {
@@ -395,10 +398,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            // get the timestamp of the local sqlbuildinfo.json file
-            var localBuildInfoFile = new FileInfo(SqlBuildInfoFileName);
-
-            DateTime lastUpdDateTime = DateTime.MinValue;
+            DateTime lastUpdDateTimeServer = DateTime.MinValue;
+            DateTime lastUpdDateTimeLocal = DateTime.MinValue;
 
             var sqlBuildInfoUpdateURLs = ConfigurationManager.AppSettings["SQLBuildInfoUpdateURLs"].Split(';');
             var sqlBuildInfoURLs = ConfigurationManager.AppSettings["SQLBuildInfoURLs"].Split(';');
@@ -421,13 +422,30 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 {
                     if (httpResp.StatusCode == HttpStatusCode.OK)
                     {
+                        // get content of lastupdated.txt from upstream (GitHub) repo
                         using (var strm = new StreamReader(httpResp.GetResponseStream()))
                         {
                             string lastUpd = strm.ReadToEnd().Trim();
-                            lastUpdDateTime = DateTime.ParseExact(lastUpd, "yyyy-MM-dd HH:mm", new CultureInfo("en-US"));
+                            lastUpdDateTimeServer = DateTime.ParseExact(lastUpd,
+                                LastUpdatedTimestampFormat,
+                                new CultureInfo(LastUpdatedTimestampCulture)
+                                );
                         }
 
-                        if (lastUpdDateTime > localBuildInfoFile.LastWriteTimeUtc)
+                        // get content of local lastupdated.txt (if it exists)
+                        if (File.Exists(LastUpdatedTimestampFileName))
+                        {
+                            using (var strm = new StreamReader(LastUpdatedTimestampFileName))
+                            {
+                                string lastUpd = strm.ReadToEnd().Trim();
+                                lastUpdDateTimeLocal = DateTime.ParseExact(lastUpd,
+                                    LastUpdatedTimestampFormat,
+                                    new CultureInfo(LastUpdatedTimestampCulture)
+                                    );
+                            }
+                        }
+
+                        if (lastUpdDateTimeServer > lastUpdDateTimeLocal)
                         {
                             // if the server timestamp > local timestamp, prompt to download
                             var res = MessageBox.Show(this,
@@ -460,11 +478,21 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                                 {
                                                     var jsonContent = strm.ReadToEnd();
 
+                                                    // update local copy of build info file
                                                     using (var writer = new StreamWriter(SqlBuildInfoFileName))
                                                     {
                                                         writer.Write(jsonContent);
                                                         writer.Flush();
                                                         writer.Close();
+                                                    }
+
+                                                    // update local last updated timestamp
+                                                    using (var wr = new StreamWriter(LastUpdatedTimestampFileName, false))
+                                                    {
+                                                        wr.Write(lastUpdDateTimeServer.ToString(
+                                                            LastUpdatedTimestampFormat,
+                                                            new CultureInfo(LastUpdatedTimestampCulture)
+                                                            ));
                                                     }
                                                 }
                                             }
