@@ -635,6 +635,80 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             return true;
         }
 
+        private static string GetSymbolizedFrame(string moduleName,
+        IDiaSymbol mysym,
+            bool useUndecorateLogic,
+            bool includeOffset,
+            int displacement
+            )
+        {
+            string funcname2;
+
+            if (!useUndecorateLogic)
+            {
+                funcname2 = mysym.name;
+            }
+            else
+            {
+                // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
+                // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
+                mysym.get_undecoratedNameEx(0x1000, out funcname2);
+
+                // catch-all / fallback
+                if (string.IsNullOrEmpty(funcname2))
+                {
+                    funcname2 = mysym.name;
+                }
+            }
+
+            string offsetStr = string.Empty;
+
+            if (includeOffset)
+            {
+                offsetStr = string.Format(CultureInfo.CurrentCulture,
+                    "+{0}",
+                    displacement);
+            }
+
+            return string.Format(CultureInfo.CurrentCulture,
+                "{0}!{1}{2}",
+                moduleName,
+                funcname2,
+                offsetStr);
+        }
+
+        private static string GetSourceInfo(IDiaEnumLineNumbers enumLineNums,
+            bool pdbHasSourceInfo)
+        {
+            var sbOutput = new StringBuilder();
+
+            // only if we found line number information should we append to output 
+            if (enumLineNums.count > 0)
+            {
+                for (uint tmpOrdinal = 0; tmpOrdinal < enumLineNums.count; tmpOrdinal++)
+                {
+                    if (tmpOrdinal > 0)
+                    {
+                        sbOutput.Append(" -- WARN: multiple matches -- ");
+                    }
+
+                    sbOutput.Append(string.Format(CultureInfo.CurrentCulture,
+                        "({0}:{1})",
+                        enumLineNums.Item(tmpOrdinal).sourceFile.fileName,
+                        enumLineNums.Item(tmpOrdinal).lineNumber));
+                }
+            }
+            else
+            {
+                if (pdbHasSourceInfo)
+                {
+                    sbOutput.Append("-- WARN: unable to find source info --");
+                }
+            }
+
+            return sbOutput.ToString();
+        }
+
         /// <summary>
         /// This is the most important function in this whole utility! It uses DIA to lookup the symbol based on RVA offset
         /// It also looks up line number information if available and then formats all of this information for returning to caller
@@ -646,7 +720,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="includeOffset">Whether to include func offset in output</param>
         /// <returns></returns>
         private string ProcessFrameModuleOffset(Dictionary<string, 
-            DiaUtil> _diautils, 
+            DiaUtil> _diautils,
             string moduleName, 
             string offset,
             bool includeSourceInfo,
@@ -725,76 +799,45 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return null;
             }
 
-            // we are now just using the name property instead of calling the undecorated name function
-            string funcname2;
-
-            if (!useUndecorateLogic)
-            {
-                funcname2 = mysym.name;
-            }
-            else
-            {
-                // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
-                // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
-                mysym.get_undecoratedNameEx(0x1000, out funcname2);
-
-                // catch-all / fallback
-                if (string.IsNullOrEmpty(funcname2))
-                {
-                    funcname2 = mysym.name;
-                }
-            }
-
-            string offsetStr = string.Empty;
-
-            if (includeOffset)
-            {
-                offsetStr = string.Format(CultureInfo.CurrentCulture,
-                    "+{0}",
-                    displacement);
-            }
-
             // try to find if we have source and line number info and include it based on the param
             string sourceInfo = string.Empty;
+
+            var pdbHasSourceInfo = _diautils[moduleName].HasSourceInfo;
 
             if (includeSourceInfo)
             {
                 _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 0, out IDiaEnumLineNumbers enumLineNums);
 
-                // only if we found line number information should we append to output 
-                if (enumLineNums.count > 0)
-                {
-                    for (uint tmpOrdinal = 0; tmpOrdinal < enumLineNums.count; tmpOrdinal++)
-                    {
-                        if (tmpOrdinal > 0)
-                        {
-                            sourceInfo += " -- WARN: multiple matches -- ";
-                        }
-
-                        sourceInfo += string.Format(CultureInfo.CurrentCulture,
-                            "({0}:{1})",
-                            enumLineNums.Item(0).sourceFile.fileName,
-                            enumLineNums.Item(0).lineNumber);
-                    }
-                }
-                else
-                {
-                    if (_diautils[moduleName].HasSourceInfo)
-                    {
-                        sourceInfo = "-- WARN: unable to find source info --";
-                    }
-                }
+                sourceInfo = GetSourceInfo(enumLineNums,
+                    pdbHasSourceInfo
+                    );
             }
+
+            var symbolizedFrame = GetSymbolizedFrame(moduleName,
+                mysym,
+                useUndecorateLogic,
+                includeOffset,
+                displacement);
+
+            // Process inline functions, but only if private PDBs are in use
+            string inlineFrameAndSourceInfo = string.Empty;
+            if (pdbHasSourceInfo)
+            {
+                inlineFrameAndSourceInfo = ProcessInlineFunctions(
+                    moduleName,
+                    useUndecorateLogic,
+                    includeOffset,
+                    includeSourceInfo,
+                    rva,
+                    mysym,
+                    pdbHasSourceInfo
+                    );
+            }
+
+            result = (inlineFrameAndSourceInfo + symbolizedFrame + "\t" + sourceInfo).Trim();
 
             // make sure we cleanup COM allocations for the resolved sym
             Marshal.FinalReleaseComObject(mysym);
-
-            result = string.Format(CultureInfo.CurrentCulture,
-                "{0}!{1}{2}\t{3}",
-                moduleName,
-                funcname2,
-                offsetStr,
-                sourceInfo).Trim();
 
             this.rwLockCachedSymbols.EnterWriteLock();
             if (!this.cachedSymbols.ContainsKey(symKey))
@@ -804,6 +847,55 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.rwLockCachedSymbols.ExitWriteLock();
 
             return result;
+        }
+
+        private static string ProcessInlineFunctions(
+            string moduleName,
+            bool useUndecorateLogic,
+            bool includeOffset,
+            bool includeSourceInfo,
+            uint rva,
+            IDiaSymbol parentSym,
+            bool pdbHasSourceInfo
+            )
+        {
+            var sbInline = new StringBuilder();
+            var inlineRVA = rva - 1;
+
+            parentSym.findInlineFramesByRVA(
+                inlineRVA,
+                out IDiaEnumSymbols enumInlinees);
+
+            foreach(IDiaSymbol inlineFrame in enumInlinees)
+            {
+                var inlineeOffset = (int) (rva - inlineFrame.relativeVirtualAddress);
+
+                sbInline.Append("(Inline Function) ");
+                sbInline.Append(GetSymbolizedFrame(
+                    moduleName,
+                    inlineFrame,
+                    useUndecorateLogic,
+                    includeOffset,
+                    inlineeOffset
+                    ));
+
+                if (includeSourceInfo)
+                {
+                    inlineFrame.findInlineeLinesByRVA(
+                    inlineRVA,
+                    0,
+                    out IDiaEnumLineNumbers enumLineNums);
+
+                    sbInline.Append("\t");
+                    sbInline.Append(GetSourceInfo(enumLineNums,
+                        pdbHasSourceInfo
+                        ));
+                }
+
+                sbInline.AppendLine();
+            }
+
+            return sbInline.ToString();
         }
 
         /// <summary>
