@@ -522,8 +522,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         {
                             for (uint tmpOrdinal = 0; tmpOrdinal < matchedSyms.count; tmpOrdinal++)
                             {
-                                IDiaSymbol a = matchedSyms.Item(tmpOrdinal);
-                                var rva = a.relativeVirtualAddress;
+                                IDiaSymbol tmpSym = matchedSyms.Item(tmpOrdinal);
+                                var rva = tmpSym.relativeVirtualAddress;
 
                                 string offsetString = matchAlreadySymbolized.Groups["offset"].Value;
                                 int numberBase = offsetString.ToUpperInvariant().StartsWith("0X", StringComparison.CurrentCulture) ? 16 : 10;
@@ -533,16 +533,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                                 myDIAsession.findLinesByRVA(rva, 0, out IDiaEnumLineNumbers enumLineNums);
 
-                                string tmpsourceInfo = string.Empty;
-
-                                // only if we found line number information should we append to output
-                                if (enumLineNums.count > 0)
-                                {
-                                    tmpsourceInfo = string.Format(CultureInfo.CurrentCulture,
-                                        "({0}:{1})",
-                                        enumLineNums.Item(0).sourceFile.fileName,
-                                        enumLineNums.Item(0).lineNumber);
-                                }
+                                string tmpsourceInfo = GetSourceInfo(enumLineNums,
+                                    _diautils[matchAlreadySymbolized.Groups["module"].Value].HasSourceInfo);
 
                                 if (tmpOrdinal > 0)
                                 {
@@ -555,7 +547,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                     matchAlreadySymbolized.Groups["symbolizedfunc"].Value,
                                     includeOffsets ? "+" + offsetString : string.Empty,
                                     tmpsourceInfo);
+
+                                Marshal.ReleaseComObject(tmpSym);
                             }
+
+                            Marshal.ReleaseComObject(matchedSyms);
                         }
                         else
                         {
@@ -699,6 +695,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         "({0}:{1})",
                         enumLineNums.Item(tmpOrdinal).sourceFile.fileName,
                         enumLineNums.Item(tmpOrdinal).lineNumber));
+
+                    Marshal.FinalReleaseComObject(enumLineNums.Item(tmpOrdinal));
                 }
             }
             else
@@ -708,6 +706,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     sbOutput.Append("-- WARN: unable to find source info --");
                 }
             }
+
+            Marshal.FinalReleaseComObject(enumLineNums);
 
             return sbOutput.ToString();
         }
@@ -900,8 +900,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             ));
                     }
 
+                    Marshal.ReleaseComObject(inlineFrame);
+
                     sbInline.AppendLine();
                 }
+
+                Marshal.ReleaseComObject(enumInlinees);
             }
             catch (COMException)
             {
