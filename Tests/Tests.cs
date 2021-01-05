@@ -65,6 +65,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     false,
                     true,
                     false,
+                    false,
                     null);
 
                 Assert.Equal("KERNELBASE!SignalObjectAndWait+147716", ret.Trim());
@@ -95,6 +96,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     false,
                     true,
                     false,
+                    false,
                     null);
 
                 Assert.Equal("sqldk!SOS_Scheduler::SwitchContext+941", ret.Trim());
@@ -119,6 +121,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     false,
                     false,
                     true,
+                    false,
                     false,
                     null);
 
@@ -153,6 +156,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     false,
                     false,
                     true,
+                    false,
                     false,
                     null);
 
@@ -315,6 +319,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     false,
                     false,
                     false,
+                    false,
                     null);
 
                 var expectedSymbol = "sqldk!MemoryClerkInternal::AllocatePagesWithFailureMode";
@@ -367,6 +372,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     pdbPath,
                     false,
                     null,
+                    false,
                     false,
                     false,
                     false,
@@ -430,6 +436,7 @@ sqllang!CStmtQuery::InitQuery",
                     false,
                     true,
                     false,
+                    false,
                     null);
 
                 Assert.Equal(
@@ -462,6 +469,7 @@ sqllang!CStmtQuery::InitQuery",
                     false,
                     false,
                     true,
+                    false,
                     false,
                     null);
 
@@ -496,6 +504,7 @@ sqllang!CStmtQuery::InitQuery",
                     true,
                     true,
                     true,
+                    false,
                     false,
                     null);
 
@@ -568,6 +577,7 @@ sqllang!CStmtQuery::InitQuery",
                     true,
                     false,
                     true,
+                    false,
                     false,
                     null);
 
@@ -644,6 +654,7 @@ sqllang!process_commands_internal+735",
                     false,
                     true,
                     false,
+                    false,
                     null);
 
                 Assert.Equal(
@@ -673,6 +684,80 @@ sqllang!CSQLSource::Execute+2435
 sqllang!process_request+3681
 sqllang!process_commands_internal+735",
                     symres.Trim());
+            }
+        }
+
+        /// <summary>
+        /// Test for inline frame resolution.
+        /// This test uses symbols for a Windows Driver Kit module, Wdf01000.sys,
+        /// because private PDBs for that module are legitimately available on the
+        /// Microsoft public symbols servers.
+        /// https://github.com/microsoft/Windows-Driver-Frameworks/releases if interested.
+        /// </summary>
+        [Fact]
+        public void InlineFrameResolution()
+        {
+            using (var csr = new StackResolver())
+            {
+                var pdbPath = @"..\..\Tests\TestCases\SourceInformation";
+
+                var ret = csr.ResolveCallstacks(
+                    "Wdf01000+17f27",
+                    pdbPath,
+                    false,
+                    null,
+                    false,
+                    false,
+                    true,
+                    false,
+                    true,
+                    true,
+                    false,
+                    null);
+
+                Assert.Equal(
+                    @"(Inline Function) Wdf01000!Mx::MxLeaveCriticalRegion+12	(minkernel\wdf\framework\shared\inc\primitives\km\MxGeneralKm.h:198)
+(Inline Function) Wdf01000!FxWaitLockInternal::ReleaseLock+62	(minkernel\wdf\framework\shared\inc\private\common\FxWaitLock.hpp:305)
+(Inline Function) Wdf01000!FxEnumerationInfo::ReleaseParentPowerStateLock+62	(minkernel\wdf\framework\shared\inc\private\common\FxPkgPnp.hpp:510)
+Wdf01000!FxPkgPnp::PowerPolicyCanChildPowerUp+143	(minkernel\wdf\framework\shared\inc\private\common\FxPkgPnp.hpp:4127)",
+                    ret.Trim());
+            }
+        }
+
+        /// <summary>
+        /// Test for inline frame resolution without source lines included
+        /// This test uses symbols for a Windows Driver Kit module, Wdf01000.sys,
+        /// because private PDBs for that module are legitimately available on the
+        /// Microsoft public symbols servers.
+        /// https://github.com/microsoft/Windows-Driver-Frameworks/releases if interested.
+        /// </summary>
+        [Fact]
+        public void InlineFrameResolutionNoSourceInfo()
+        {
+            using (var csr = new StackResolver())
+            {
+                var pdbPath = @"..\..\Tests\TestCases\SourceInformation";
+
+                var ret = csr.ResolveCallstacks(
+                    "Wdf01000+17f27",
+                    pdbPath,
+                    false,
+                    null,
+                    false,
+                    false,
+                    false,
+                    false,
+                    true,
+                    true,
+                    false,
+                    null);
+
+                Assert.Equal(
+                    @"(Inline Function) Wdf01000!Mx::MxLeaveCriticalRegion+12
+(Inline Function) Wdf01000!FxWaitLockInternal::ReleaseLock+62
+(Inline Function) Wdf01000!FxEnumerationInfo::ReleaseParentPowerStateLock+62
+Wdf01000!FxPkgPnp::PowerPolicyCanChildPowerUp+143",
+                    ret.Trim());
             }
         }
     }

@@ -486,7 +486,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             string[] callStackLines,
             bool includeSourceInfo,
             bool relookupSource,
-            bool includeOffsets)
+            bool includeOffsets,
+            bool showInlineFrames
+            )
         {
             var finalCallstack = new StringBuilder();
 
@@ -578,7 +580,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             matchedModuleName, 
                             match.Groups["offset"].Value,
                             includeSourceInfo,
-                            includeOffsets
+                            includeOffsets,
+                            showInlineFrames
                             );
 
                         if (!string.IsNullOrEmpty(processedFrame))
@@ -724,7 +727,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             string moduleName, 
             string offset,
             bool includeSourceInfo,
-            bool includeOffset)
+            bool includeOffset,
+            bool showInlineFrames
+            )
         {
             bool useUndecorateLogic = false;
 
@@ -821,9 +826,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             // Process inline functions, but only if private PDBs are in use
             string inlineFrameAndSourceInfo = string.Empty;
-            if (pdbHasSourceInfo)
+            if (showInlineFrames && pdbHasSourceInfo)
             {
-                inlineFrameAndSourceInfo = ProcessInlineFunctions(
+                inlineFrameAndSourceInfo = ProcessInlineFrames(
                     moduleName,
                     useUndecorateLogic,
                     includeOffset,
@@ -849,7 +854,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             return result;
         }
 
-        private static string ProcessInlineFunctions(
+        private static string ProcessInlineFrames(
             string moduleName,
             bool useUndecorateLogic,
             bool includeOffset,
@@ -860,39 +865,47 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             )
         {
             var sbInline = new StringBuilder();
-            var inlineRVA = rva - 1;
 
-            parentSym.findInlineFramesByRVA(
-                inlineRVA,
-                out IDiaEnumSymbols enumInlinees);
-
-            foreach(IDiaSymbol inlineFrame in enumInlinees)
+            try
             {
-                var inlineeOffset = (int) (rva - inlineFrame.relativeVirtualAddress);
+                var inlineRVA = rva - 1;
 
-                sbInline.Append("(Inline Function) ");
-                sbInline.Append(GetSymbolizedFrame(
-                    moduleName,
-                    inlineFrame,
-                    useUndecorateLogic,
-                    includeOffset,
-                    inlineeOffset
-                    ));
-
-                if (includeSourceInfo)
-                {
-                    inlineFrame.findInlineeLinesByRVA(
+                parentSym.findInlineFramesByRVA(
                     inlineRVA,
-                    0,
-                    out IDiaEnumLineNumbers enumLineNums);
+                    out IDiaEnumSymbols enumInlinees);
 
-                    sbInline.Append("\t");
-                    sbInline.Append(GetSourceInfo(enumLineNums,
-                        pdbHasSourceInfo
+                foreach (IDiaSymbol inlineFrame in enumInlinees)
+                {
+                    var inlineeOffset = (int)(rva - inlineFrame.relativeVirtualAddress);
+
+                    sbInline.Append("(Inline Function) ");
+                    sbInline.Append(GetSymbolizedFrame(
+                        moduleName,
+                        inlineFrame,
+                        useUndecorateLogic,
+                        includeOffset,
+                        inlineeOffset
                         ));
-                }
 
-                sbInline.AppendLine();
+                    if (includeSourceInfo)
+                    {
+                        inlineFrame.findInlineeLinesByRVA(
+                        inlineRVA,
+                        0,
+                        out IDiaEnumLineNumbers enumLineNums);
+
+                        sbInline.Append("\t");
+                        sbInline.Append(GetSourceInfo(enumLineNums,
+                            pdbHasSourceInfo
+                            ));
+                    }
+
+                    sbInline.AppendLine();
+                }
+            }
+            catch (COMException)
+            {
+                sbInline.AppendLine(" -- WARN: Unable to process inline frames");
             }
 
             return sbInline.ToString();
@@ -1051,6 +1064,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool includeSourceInfo,
             bool relookupSource,
             bool includeOffsets,
+            bool showInlineFrames,
             bool cachePDB,
             string outputFilePath)
         {
@@ -1208,6 +1222,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     framesOnSingleLine = framesOnSingleLine,
                     includeOffsets = includeOffsets,
                     includeSourceInfo = includeSourceInfo,
+                    showInlineFrames = showInlineFrames,
                     listOfCallStacks = listOfCallStacks,
                     numThreads = numThreads,
                     relookupSource = relookupSource,
@@ -1366,7 +1381,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         callStackLines,
                         tp.includeSourceInfo,
                         tp.relookupSource,
-                        tp.includeOffsets);
+                        tp.includeOffsets,
+                        tp.showInlineFrames
+                        );
                 }
                 else
                 {
