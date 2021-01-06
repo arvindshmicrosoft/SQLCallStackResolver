@@ -77,6 +77,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// </summary>
         public string StatusMessage;
 
+        /// <summary>
+        /// Internal counter used to implement progress reporting
+        /// </summary>
         private int globalCounter = 0;
 
         private bool cancelRequested = false;
@@ -160,6 +163,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// return the information as equivalent XML
         /// </summary>
         /// <param name="xelFiles">List of paths to XEL files to read</param>
+        /// <param name="bucketize">Boolean, whether to combine identical callstack patterns into the same "bucket"</param>
         /// <returns>A tuple with the count of events and XML equivalent of the histogram corresponding to these events</returns>
         public Tuple<int, string> ExtractFromXEL(string[] xelFiles, bool bucketize)
         {
@@ -480,6 +484,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="callStackLines">Call stack string</param>
         /// <param name="includeSourceInfo">Whether to include source / line info</param>
         /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
+        /// <param name="includeOffsets">Boolean, whether to include function offsets (in decimal) in the output</param>
+        /// <param name="showInlineFrames">Boolean, whether to include inline frames (requires private PDBs) in the output</param>
         /// <returns></returns>
         private string ResolveSymbols(Dictionary<string, 
             DiaUtil> _diautils, 
@@ -634,8 +640,17 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             return true;
         }
 
+        /// <summary>
+        /// Internal helper function to return the symbolized frame text (not including source info)
+        /// </summary>
+        /// <param name="moduleName">Module name for the current frame</param>
+        /// <param name="mysym">DIA symbol object being "symbolized"</param>
+        /// <param name="useUndecorateLogic">Whether to "undecorate" the symbol name - required for public PDBs</param>
+        /// <param name="includeOffset">Boolean, whether to include the offset within the function in the output</param>
+        /// <param name="displacement">Integer offset into the function</param>
+        /// <returns></returns>
         private static string GetSymbolizedFrame(string moduleName,
-        IDiaSymbol mysym,
+            IDiaSymbol mysym,
             bool useUndecorateLogic,
             bool includeOffset,
             int displacement
@@ -676,6 +691,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 offsetStr);
         }
 
+        /// <summary>
+        /// Internal helper function to obtain source information for given symbol
+        /// </summary>
+        /// <param name="enumLineNums">Input object enumerating line number(s)</param>
+        /// <param name="pdbHasSourceInfo">Boolean, whether the PDB for this module has source info</param>
+        /// <returns></returns>
         private static string GetSourceInfo(IDiaEnumLineNumbers enumLineNums,
             bool pdbHasSourceInfo)
         {
@@ -721,6 +742,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="offset">RVA offset within the module</param>
         /// <param name="includeSourceInfo">Whether to include source / line info</param>
         /// <param name="includeOffset">Whether to include func offset in output</param>
+        /// <param name="showInlineFrames">Boolean, whether to include inline frames in the output</param>
         /// <returns></returns>
         private string ProcessFrameModuleOffset(Dictionary<string, 
             DiaUtil> _diautils,
@@ -854,6 +876,17 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             return result;
         }
 
+        /// <summary>
+        /// Internal helper function to find any inline frames at a given RVA
+        /// </summary>
+        /// <param name="moduleName">Module name for current frame</param>
+        /// <param name="useUndecorateLogic">Whether to "undecorate" the symbol (public symbols only)</param>
+        /// <param name="includeOffset">Boolean, whether to include function offset in output</param>
+        /// <param name="includeSourceInfo">Boolean, whether to include source info in output</param>
+        /// <param name="rva">Relative Virtual Address at which potential inline frames need to be looked up</param>
+        /// <param name="parentSym">The parent DIA symbol object to use for inline frame lookup</param>
+        /// <param name="pdbHasSourceInfo">Boolean, whether the PDB for this module has source info</param>
+        /// <returns></returns>
         private static string ProcessInlineFrames(
             string moduleName,
             bool useUndecorateLogic,
@@ -987,12 +1020,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// It is VERY important to specify the PDB search paths correctly, because there is no 'signature' information available 
         /// to match the PDB in any automatic way.
         /// </summary>
-        /// <param name="_diautils"></param>
-        /// <param name="rootPaths"></param>
-        /// <param name="recurse"></param>
-        /// <param name="moduleNames"></param>
+        /// <param name="_diautils">Internal dictionary object to hold cached instances of the PDB map</param>
+        /// <param name="rootPaths">Symbol search paths</param>
+        /// <param name="recurse">Boolean, whether to recursively search for matching PDBs</param>
+        /// <param name="moduleNames">List of modules to search PDBs for</param>
         /// <param name="cachePDB">Cache a copy of PDBs into %TEMP%\SymCache</param>
-        private static bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames, bool cachePDB)
+        private static bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils,
+            string rootPaths,
+            bool recurse,
+            List<string> moduleNames,
+            bool cachePDB)
         {
             // loop through each module, trying to find matched PDB files
             var splitRootPaths = rootPaths.Split(';');
@@ -1058,6 +1095,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="includeSourceInfo">This is used to control whether source information is included (in the case that private PDBs are available)</param>
         /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
         /// <param name="includeOffsets">Whether to output func offsets or not as part of output</param>
+        /// <param name="showInlineFrames">Boolean, whether to resolve and show inline frames in the output</param>
+        /// <param name="cachePDB">Boolean, whether to cache PDBs locally</param>
+        /// <param name="outputFilePath">File path, used if output is directly written to a file</param>
         /// <returns></returns>
         public string ResolveCallstacks(string inputCallstackText, 
             string symPath, 
@@ -1414,8 +1454,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// This method generates a PowerShell script to automate download of matched PDBs from the public symbol server.
         /// </summary>
-        /// <param name="dllSearchPath"></param>
-        /// <param name="recurse"></param>
+        /// <param name="dllSearchPath">Search path for DLLs</param>
+        /// <param name="recurse">Boolean, whether to recursively search for DLLs</param>
         /// <returns></returns>
         public static List<Symbol> GetSymbolDetailsForBinaries(List<string> dllPaths, bool recurse)
         {
