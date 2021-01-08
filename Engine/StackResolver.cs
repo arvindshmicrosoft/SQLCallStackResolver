@@ -77,6 +77,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// </summary>
         public string StatusMessage;
 
+        /// <summary>
+        /// Internal counter used to implement progress reporting
+        /// </summary>
         private int globalCounter = 0;
 
         private bool cancelRequested = false;
@@ -160,6 +163,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// return the information as equivalent XML
         /// </summary>
         /// <param name="xelFiles">List of paths to XEL files to read</param>
+        /// <param name="bucketize">Boolean, whether to combine identical callstack patterns into the same "bucket"</param>
         /// <returns>A tuple with the count of events and XML equivalent of the histogram corresponding to these events</returns>
         public Tuple<int, string> ExtractFromXEL(string[] xelFiles, bool bucketize)
         {
@@ -480,13 +484,17 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="callStackLines">Call stack string</param>
         /// <param name="includeSourceInfo">Whether to include source / line info</param>
         /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
+        /// <param name="includeOffsets">Boolean, whether to include function offsets (in decimal) in the output</param>
+        /// <param name="showInlineFrames">Boolean, whether to include inline frames (requires private PDBs) in the output</param>
         /// <returns></returns>
         private string ResolveSymbols(Dictionary<string, 
             DiaUtil> _diautils, 
             string[] callStackLines,
             bool includeSourceInfo,
             bool relookupSource,
-            bool includeOffsets)
+            bool includeOffsets,
+            bool showInlineFrames
+            )
         {
             var finalCallstack = new StringBuilder();
 
@@ -520,8 +528,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         {
                             for (uint tmpOrdinal = 0; tmpOrdinal < matchedSyms.count; tmpOrdinal++)
                             {
-                                IDiaSymbol a = matchedSyms.Item(tmpOrdinal);
-                                var rva = a.relativeVirtualAddress;
+                                IDiaSymbol tmpSym = matchedSyms.Item(tmpOrdinal);
+                                var rva = tmpSym.relativeVirtualAddress;
 
                                 string offsetString = matchAlreadySymbolized.Groups["offset"].Value;
                                 int numberBase = offsetString.ToUpperInvariant().StartsWith("0X", StringComparison.CurrentCulture) ? 16 : 10;
@@ -531,16 +539,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                                 myDIAsession.findLinesByRVA(rva, 0, out IDiaEnumLineNumbers enumLineNums);
 
-                                string tmpsourceInfo = string.Empty;
-
-                                // only if we found line number information should we append to output
-                                if (enumLineNums.count > 0)
-                                {
-                                    tmpsourceInfo = string.Format(CultureInfo.CurrentCulture,
-                                        "({0}:{1})",
-                                        enumLineNums.Item(0).sourceFile.fileName,
-                                        enumLineNums.Item(0).lineNumber);
-                                }
+                                string tmpsourceInfo = GetSourceInfo(enumLineNums,
+                                    _diautils[matchAlreadySymbolized.Groups["module"].Value].HasSourceInfo);
 
                                 if (tmpOrdinal > 0)
                                 {
@@ -553,7 +553,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                     matchAlreadySymbolized.Groups["symbolizedfunc"].Value,
                                     includeOffsets ? "+" + offsetString : string.Empty,
                                     tmpsourceInfo);
+
+                                Marshal.ReleaseComObject(tmpSym);
                             }
+
+                            Marshal.ReleaseComObject(matchedSyms);
                         }
                         else
                         {
@@ -578,7 +582,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                             matchedModuleName, 
                             match.Groups["offset"].Value,
                             includeSourceInfo,
-                            includeOffsets
+                            includeOffsets,
+                            showInlineFrames
                             );
 
                         if (!string.IsNullOrEmpty(processedFrame))
@@ -636,6 +641,99 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         }
 
         /// <summary>
+        /// Internal helper function to return the symbolized frame text (not including source info)
+        /// </summary>
+        /// <param name="moduleName">Module name for the current frame</param>
+        /// <param name="mysym">DIA symbol object being "symbolized"</param>
+        /// <param name="useUndecorateLogic">Whether to "undecorate" the symbol name - required for public PDBs</param>
+        /// <param name="includeOffset">Boolean, whether to include the offset within the function in the output</param>
+        /// <param name="displacement">Integer offset into the function</param>
+        /// <returns></returns>
+        private static string GetSymbolizedFrame(string moduleName,
+            IDiaSymbol mysym,
+            bool useUndecorateLogic,
+            bool includeOffset,
+            int displacement
+            )
+        {
+            string funcname2;
+
+            if (!useUndecorateLogic)
+            {
+                funcname2 = mysym.name;
+            }
+            else
+            {
+                // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
+                // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
+                mysym.get_undecoratedNameEx(0x1000, out funcname2);
+
+                // catch-all / fallback
+                if (string.IsNullOrEmpty(funcname2))
+                {
+                    funcname2 = mysym.name;
+                }
+            }
+
+            string offsetStr = string.Empty;
+
+            if (includeOffset)
+            {
+                offsetStr = string.Format(CultureInfo.CurrentCulture,
+                    "+{0}",
+                    displacement);
+            }
+
+            return string.Format(CultureInfo.CurrentCulture,
+                "{0}!{1}{2}",
+                moduleName,
+                funcname2,
+                offsetStr);
+        }
+
+        /// <summary>
+        /// Internal helper function to obtain source information for given symbol
+        /// </summary>
+        /// <param name="enumLineNums">Input object enumerating line number(s)</param>
+        /// <param name="pdbHasSourceInfo">Boolean, whether the PDB for this module has source info</param>
+        /// <returns></returns>
+        private static string GetSourceInfo(IDiaEnumLineNumbers enumLineNums,
+            bool pdbHasSourceInfo)
+        {
+            var sbOutput = new StringBuilder();
+
+            // only if we found line number information should we append to output 
+            if (enumLineNums.count > 0)
+            {
+                for (uint tmpOrdinal = 0; tmpOrdinal < enumLineNums.count; tmpOrdinal++)
+                {
+                    if (tmpOrdinal > 0)
+                    {
+                        sbOutput.Append(" -- WARN: multiple matches -- ");
+                    }
+
+                    sbOutput.Append(string.Format(CultureInfo.CurrentCulture,
+                        "({0}:{1})",
+                        enumLineNums.Item(tmpOrdinal).sourceFile.fileName,
+                        enumLineNums.Item(tmpOrdinal).lineNumber));
+
+                    Marshal.FinalReleaseComObject(enumLineNums.Item(tmpOrdinal));
+                }
+            }
+            else
+            {
+                if (pdbHasSourceInfo)
+                {
+                    sbOutput.Append("-- WARN: unable to find source info --");
+                }
+            }
+
+            Marshal.FinalReleaseComObject(enumLineNums);
+
+            return sbOutput.ToString();
+        }
+
+        /// <summary>
         /// This is the most important function in this whole utility! It uses DIA to lookup the symbol based on RVA offset
         /// It also looks up line number information if available and then formats all of this information for returning to caller
         /// </summary>
@@ -644,13 +742,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="offset">RVA offset within the module</param>
         /// <param name="includeSourceInfo">Whether to include source / line info</param>
         /// <param name="includeOffset">Whether to include func offset in output</param>
+        /// <param name="showInlineFrames">Boolean, whether to include inline frames in the output</param>
         /// <returns></returns>
         private string ProcessFrameModuleOffset(Dictionary<string, 
-            DiaUtil> _diautils, 
+            DiaUtil> _diautils,
             string moduleName, 
             string offset,
             bool includeSourceInfo,
-            bool includeOffset)
+            bool includeOffset,
+            bool showInlineFrames
+            )
         {
             bool useUndecorateLogic = false;
 
@@ -725,76 +826,45 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return null;
             }
 
-            // we are now just using the name property instead of calling the undecorated name function
-            string funcname2;
-
-            if (!useUndecorateLogic)
-            {
-                funcname2 = mysym.name;
-            }
-            else
-            {
-                // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
-                // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
-                mysym.get_undecoratedNameEx(0x1000, out funcname2);
-
-                // catch-all / fallback
-                if (string.IsNullOrEmpty(funcname2))
-                {
-                    funcname2 = mysym.name;
-                }
-            }
-
-            string offsetStr = string.Empty;
-
-            if (includeOffset)
-            {
-                offsetStr = string.Format(CultureInfo.CurrentCulture,
-                    "+{0}",
-                    displacement);
-            }
-
             // try to find if we have source and line number info and include it based on the param
             string sourceInfo = string.Empty;
+
+            var pdbHasSourceInfo = _diautils[moduleName].HasSourceInfo;
 
             if (includeSourceInfo)
             {
                 _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 0, out IDiaEnumLineNumbers enumLineNums);
 
-                // only if we found line number information should we append to output 
-                if (enumLineNums.count > 0)
-                {
-                    for (uint tmpOrdinal = 0; tmpOrdinal < enumLineNums.count; tmpOrdinal++)
-                    {
-                        if (tmpOrdinal > 0)
-                        {
-                            sourceInfo += " -- WARN: multiple matches -- ";
-                        }
-
-                        sourceInfo += string.Format(CultureInfo.CurrentCulture,
-                            "({0}:{1})",
-                            enumLineNums.Item(0).sourceFile.fileName,
-                            enumLineNums.Item(0).lineNumber);
-                    }
-                }
-                else
-                {
-                    if (_diautils[moduleName].HasSourceInfo)
-                    {
-                        sourceInfo = "-- WARN: unable to find source info --";
-                    }
-                }
+                sourceInfo = GetSourceInfo(enumLineNums,
+                    pdbHasSourceInfo
+                    );
             }
+
+            var symbolizedFrame = GetSymbolizedFrame(moduleName,
+                mysym,
+                useUndecorateLogic,
+                includeOffset,
+                displacement);
+
+            // Process inline functions, but only if private PDBs are in use
+            string inlineFrameAndSourceInfo = string.Empty;
+            if (showInlineFrames && pdbHasSourceInfo)
+            {
+                inlineFrameAndSourceInfo = ProcessInlineFrames(
+                    moduleName,
+                    useUndecorateLogic,
+                    includeOffset,
+                    includeSourceInfo,
+                    rva,
+                    mysym,
+                    pdbHasSourceInfo
+                    );
+            }
+
+            result = (inlineFrameAndSourceInfo + symbolizedFrame + "\t" + sourceInfo).Trim();
 
             // make sure we cleanup COM allocations for the resolved sym
             Marshal.FinalReleaseComObject(mysym);
-
-            result = string.Format(CultureInfo.CurrentCulture,
-                "{0}!{1}{2}\t{3}",
-                moduleName,
-                funcname2,
-                offsetStr,
-                sourceInfo).Trim();
 
             this.rwLockCachedSymbols.EnterWriteLock();
             if (!this.cachedSymbols.ContainsKey(symKey))
@@ -804,6 +874,78 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.rwLockCachedSymbols.ExitWriteLock();
 
             return result;
+        }
+
+        /// <summary>
+        /// Internal helper function to find any inline frames at a given RVA
+        /// </summary>
+        /// <param name="moduleName">Module name for current frame</param>
+        /// <param name="useUndecorateLogic">Whether to "undecorate" the symbol (public symbols only)</param>
+        /// <param name="includeOffset">Boolean, whether to include function offset in output</param>
+        /// <param name="includeSourceInfo">Boolean, whether to include source info in output</param>
+        /// <param name="rva">Relative Virtual Address at which potential inline frames need to be looked up</param>
+        /// <param name="parentSym">The parent DIA symbol object to use for inline frame lookup</param>
+        /// <param name="pdbHasSourceInfo">Boolean, whether the PDB for this module has source info</param>
+        /// <returns></returns>
+        private static string ProcessInlineFrames(
+            string moduleName,
+            bool useUndecorateLogic,
+            bool includeOffset,
+            bool includeSourceInfo,
+            uint rva,
+            IDiaSymbol parentSym,
+            bool pdbHasSourceInfo
+            )
+        {
+            var sbInline = new StringBuilder();
+
+            try
+            {
+                var inlineRVA = rva - 1;
+
+                parentSym.findInlineFramesByRVA(
+                    inlineRVA,
+                    out IDiaEnumSymbols enumInlinees);
+
+                foreach (IDiaSymbol inlineFrame in enumInlinees)
+                {
+                    var inlineeOffset = (int)(rva - inlineFrame.relativeVirtualAddress);
+
+                    sbInline.Append("(Inline Function) ");
+                    sbInline.Append(GetSymbolizedFrame(
+                        moduleName,
+                        inlineFrame,
+                        useUndecorateLogic,
+                        includeOffset,
+                        inlineeOffset
+                        ));
+
+                    if (includeSourceInfo)
+                    {
+                        inlineFrame.findInlineeLinesByRVA(
+                        inlineRVA,
+                        0,
+                        out IDiaEnumLineNumbers enumLineNums);
+
+                        sbInline.Append("\t");
+                        sbInline.Append(GetSourceInfo(enumLineNums,
+                            pdbHasSourceInfo
+                            ));
+                    }
+
+                    Marshal.ReleaseComObject(inlineFrame);
+
+                    sbInline.AppendLine();
+                }
+
+                Marshal.ReleaseComObject(enumInlinees);
+            }
+            catch (COMException)
+            {
+                sbInline.AppendLine(" -- WARN: Unable to process inline frames");
+            }
+
+            return sbInline.ToString();
         }
 
         /// <summary>
@@ -878,12 +1020,16 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// It is VERY important to specify the PDB search paths correctly, because there is no 'signature' information available 
         /// to match the PDB in any automatic way.
         /// </summary>
-        /// <param name="_diautils"></param>
-        /// <param name="rootPaths"></param>
-        /// <param name="recurse"></param>
-        /// <param name="moduleNames"></param>
+        /// <param name="_diautils">Internal dictionary object to hold cached instances of the PDB map</param>
+        /// <param name="rootPaths">Symbol search paths</param>
+        /// <param name="recurse">Boolean, whether to recursively search for matching PDBs</param>
+        /// <param name="moduleNames">List of modules to search PDBs for</param>
         /// <param name="cachePDB">Cache a copy of PDBs into %TEMP%\SymCache</param>
-        private static bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils, string rootPaths, bool recurse, List<string> moduleNames, bool cachePDB)
+        private static bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils,
+            string rootPaths,
+            bool recurse,
+            List<string> moduleNames,
+            bool cachePDB)
         {
             // loop through each module, trying to find matched PDB files
             var splitRootPaths = rootPaths.Split(';');
@@ -949,6 +1095,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <param name="includeSourceInfo">This is used to control whether source information is included (in the case that private PDBs are available)</param>
         /// <param name="relookupSource">Boolean used to control if we attempt to relookup source information</param>
         /// <param name="includeOffsets">Whether to output func offsets or not as part of output</param>
+        /// <param name="showInlineFrames">Boolean, whether to resolve and show inline frames in the output</param>
+        /// <param name="cachePDB">Boolean, whether to cache PDBs locally</param>
+        /// <param name="outputFilePath">File path, used if output is directly written to a file</param>
         /// <returns></returns>
         public string ResolveCallstacks(string inputCallstackText, 
             string symPath, 
@@ -959,6 +1108,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool includeSourceInfo,
             bool relookupSource,
             bool includeOffsets,
+            bool showInlineFrames,
             bool cachePDB,
             string outputFilePath)
         {
@@ -1116,6 +1266,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     framesOnSingleLine = framesOnSingleLine,
                     includeOffsets = includeOffsets,
                     includeSourceInfo = includeSourceInfo,
+                    showInlineFrames = showInlineFrames,
                     listOfCallStacks = listOfCallStacks,
                     numThreads = numThreads,
                     relookupSource = relookupSource,
@@ -1274,7 +1425,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         callStackLines,
                         tp.includeSourceInfo,
                         tp.relookupSource,
-                        tp.includeOffsets);
+                        tp.includeOffsets,
+                        tp.showInlineFrames
+                        );
                 }
                 else
                 {
@@ -1301,8 +1454,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// This method generates a PowerShell script to automate download of matched PDBs from the public symbol server.
         /// </summary>
-        /// <param name="dllSearchPath"></param>
-        /// <param name="recurse"></param>
+        /// <param name="dllSearchPath">Search path for DLLs</param>
+        /// <param name="recurse">Boolean, whether to recursively search for DLLs</param>
         /// <returns></returns>
         public static List<Symbol> GetSymbolDetailsForBinaries(List<string> dllPaths, bool recurse)
         {

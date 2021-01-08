@@ -62,12 +62,17 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     (uint) sym.length,
                     out IDiaEnumLineNumbers enumLineNums);
 
+                Marshal.ReleaseComObject(sym);
+
                 if (enumLineNums.count > 0)
                 {
                     // this PDB has at least 1 function with source info, so end the search
                     HasSourceInfo = true;
+
                     break;
                 }
+
+                Marshal.ReleaseComObject(enumLineNums);
             }
         }
 

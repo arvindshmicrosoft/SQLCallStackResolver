@@ -43,6 +43,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         internal bool searchDLLRecursively;
         internal bool framesOnSingleLine;
         internal bool includeSourceInfo;
+        internal bool showInlineFrames;
         internal bool relookupSource;
         internal bool includeOffsets;
         internal int numThreads;

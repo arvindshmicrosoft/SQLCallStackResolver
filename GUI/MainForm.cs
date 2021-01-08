@@ -157,6 +157,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     IncludeLineNumbers.Checked,
                     RelookupSource.Checked,
                     includeOffsets.Checked,
+                    showInlineFrames.Checked,
                     cachePDB.Checked,
                     outputFilePath.Text
                     );
