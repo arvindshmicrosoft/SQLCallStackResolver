@@ -42,6 +42,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         [JsonIgnore]
         public string InternalPDBName;
 
+        [JsonIgnore]
+        public string PDBGuid;
+
+        [JsonIgnore]
+        public int PDBAge;
+
         public string DownloadURL;
 
         public bool DownloadVerified;

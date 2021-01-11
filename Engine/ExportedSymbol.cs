@@ -29,15 +29,15 @@
 //    to use the sample scripts or documentation, even if Microsoft has been advised of the possibility of such damages.
 //------------------------------------------------------------------------------
 
-using Microsoft.Diagnostics.Runtime.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.IO.MemoryMappedFiles;
-
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
+    using Microsoft.Diagnostics.Runtime.Utilities;
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.IO.MemoryMappedFiles;
+
     /// <summary>
     /// Helper class which stores DLL export name and address (offset)
     /// </summary>

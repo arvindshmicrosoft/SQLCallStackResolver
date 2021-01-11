@@ -32,15 +32,29 @@
 namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using System;
+    using System.Collections.Generic;
     using System.Diagnostics;
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Text;
 
-    internal class SymSrvHelpers
+    public static class SymSrvHelpers
     {
-        internal static string GetLocalSymbolFolderForModule(string moduleName,
-            string symPath,
+        static int processId = Process.GetCurrentProcess().Id;
+
+        private static bool InitSymSrv(string symPath)
+        {
+            return SafeNativeMethods.SymInitialize((IntPtr)processId,
+                symPath,
+                false);
+        }
+
+        private static bool CleanupSymSrv()
+        {
+            return SafeNativeMethods.SymCleanup((IntPtr)processId);
+        }
+
+        private static string GetLocalSymbolFolderForModule(string pdbFilename,
             string pdbGuid,
             int pdbAge
             )
@@ -53,21 +67,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             IntPtr buffer = Marshal.AllocHGlobal(rawsize);
             Marshal.StructureToPtr(guid, buffer, false);
 
-            var symFileName = Path.GetFileNameWithoutExtension(moduleName) + ".pdb";
-
-            int processId = Process.GetCurrentProcess().Id;
-            bool success = SafeNativeMethods.SymInitialize((IntPtr)processId,
-                symPath,
-                false);
-
-            if (!success)
-            {
-                return String.Empty;
-            }
-
-            success = SafeNativeMethods.SymFindFileInPath((IntPtr)processId,
+            bool success = SafeNativeMethods.SymFindFileInPath((IntPtr)processId,
                 null,
-                symFileName,
+                pdbFilename,
                 buffer,
                 pdbAge,
                 0,
@@ -81,13 +83,34 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 return String.Empty;
             }
 
-            success = SafeNativeMethods.SymCleanup((IntPtr)processId);
-            if (!success)
+            return outPath.ToString();
+        }
+
+        public static List<string> GetFolderPathsForPDBs(string symPath,
+            List<Symbol> syms)
+        {
+            var retval = new List<string>();
+
+            if (!InitSymSrv(symPath))
             {
-                return String.Empty;
+                return retval;
             }
 
-            return outPath.ToString();
+            foreach(var sym in syms)
+            {
+                var path = GetLocalSymbolFolderForModule(sym.PDBName,
+                    sym.PDBGuid,
+                    sym.PDBAge);
+
+                if (!string.IsNullOrEmpty(path))
+                {
+                    retval.Add(Path.GetDirectoryName(path));
+                }
+            }
+
+            CleanupSymSrv();
+
+            return retval;
         }
     }
 }

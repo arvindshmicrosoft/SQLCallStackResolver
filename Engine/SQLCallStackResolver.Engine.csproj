@@ -112,6 +112,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DLLOrdinalHelper.cs" />
+    <Compile Include="ModuleInfoHelper.cs" />
     <Compile Include="Preprocessors.cs" />
     <Compile Include="SafeNativeMethods.cs" />
     <Compile Include="DiaUtil.cs" />

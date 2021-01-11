@@ -546,11 +546,24 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool cachePDB,
             string outputFilePath)
         {
-            //return SymSrvHelpers.GetLocalSymbolFolderForModule(
-            //    "ntdll.dll",
-            //    symPath,
-            //    "{1EB9FACB-04C7-3C5D-EA71-60764CD333D0}",
-            //    1);
+            // check if the user has provided a list of modules, each with comma-separated
+            // which can be structured fairly flexibly as long as they contain the following pieces of info
+            // per row, in different fields:
+            // PDB file name (including .pdb extension), OR module file name (.dll or .exe extension)
+            // a GUID representing the matching PDB GUID
+            // the very last field in the row should be an integer specifying the PDB "age" field
+            // in such cases, the below function will return a non-zero list of Symbol objects which internally
+            // contain these parsed values for PDB name, GUID and age
+            var syms = ModuleInfoHelper.ParseModuleInfo(inputCallstackText);
+            if (syms.Count > 0)
+            {
+                // if the user has provided such a list of module info, proceed to actually 
+                // use dbghelp.dll / symsrv.dll to download thos PDBs and get local paths for them
+                var paths = SymSrvHelpers.GetFolderPathsForPDBs(symPath, syms.Values.ToList());
+
+                // we then "inject" those local PDB paths as higher priority than any possible user provided paths
+                symPath = string.Join(";", paths) + ";" + symPath;
+            }
 
             this.cancelRequested = false;
 
@@ -938,7 +951,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     {
                         using (var dllImage = new PEImage(dllFileStream, false))
                         {
-
                             var internalPDBName = dllImage.DefaultPdb.Path;
                             var pdbGuid = dllImage.DefaultPdb.Guid;
                             var pdbAge = dllImage.DefaultPdb.Revision;

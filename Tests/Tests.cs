@@ -760,5 +760,119 @@ Wdf01000!FxPkgPnp::PowerPolicyCanChildPowerUp+143",
                     ret.Trim());
             }
         }
+
+        /// <summary>
+        /// Tests the parsing and extraction of PDB details from a set of rows each with commma-separated fields.
+        /// This sample mixes up \r\n and \n line-endings.
+        /// </summary>
+        [Fact]
+        public void ExtractModuleInfo()
+        {
+            var ret = ModuleInfoHelper.ParseModuleInfo(
+                "\"ntdll.dll\",\"10.0.19041.662\",2056192,666871280,2084960,\"ntdll.pdb\",\"{1EB9FACB-04C7-3C5D-EA71-60764CD333D0}\",0,1\r\n" +
+"\"VCRUNTIME140.dll\",\"14.16.27033.0\",86016,1563486943,105788,\"vcruntime140.amd64.pdb\",\"{AF138C3F-2933-4097-8883-C1071B13375E}\",0,1\r\n" +
+"\r\n" +
+"sqlservr.exe,7ef4ea08-777a-43b7-8bce-4da6f0fa43c7,2\r\n" +
+"\"KERNELBASE.dll\",\"10.0.19041.662\",2920448,3965251605,2936791,\"kernelbase.pdb\",\"{1FBE0B2B-89D1-37F0-1510-431FFFBA123E}\",0,1\n" +
+"\"kernel32.dll\",\"10.0.19041.662\",774144,1262097423,770204,\"kernel32.pdb\",\"{54448D8E-EFC5-AB3C-7193-D2C7A6DF9008}\",0,1\r\n");
+
+            Assert.Equal(5, ret.Count);
+            Assert.Equal("ntdll.pdb", ret["ntdll"].PDBName);
+            Assert.Equal("1EB9FACB04C73C5DEA7160764CD333D0", ret["ntdll"].PDBGuid, ignoreCase: true);
+            Assert.Equal(1, ret["ntdll"].PDBAge);
+
+            Assert.Equal("vcruntime140.amd64.pdb", ret["VCRUNTIME140"].PDBName);
+            Assert.Equal("AF138C3F293340978883C1071B13375E", ret["VCRUNTIME140"].PDBGuid, ignoreCase: true);
+            Assert.Equal(1, ret["VCRUNTIME140"].PDBAge);
+
+            Assert.Equal("sqlservr.pdb", ret["sqlservr"].PDBName);
+            Assert.Equal("7ef4ea08777a43b78bce4da6f0fa43c7", ret["sqlservr"].PDBGuid, ignoreCase: true);
+            Assert.Equal(2, ret["sqlservr"].PDBAge);
+        }
+
+        /// <summary>
+        /// Tests the parsing and extraction of PDB details from a set of rows each with commma-separated fields.
+        /// </summary>
+        [Fact]
+        public void ExtractModuleInfoEmptyString()
+        {
+            var ret = ModuleInfoHelper.ParseModuleInfo(string.Empty);
+
+            Assert.Empty(ret);
+        }
+
+        /// <summary>
+        /// Test obtaining a local path for symbols downloaded from a symbol server.
+        /// </summary>
+        [Fact]
+        public void SymSrvLocalPaths()
+        {
+            var ret = ModuleInfoHelper.ParseModuleInfo(
+                "\"ntdll.dll\",\"10.0.19041.662\",2056192,666871280,2084960,\"ntdll.pdb\",\"{1EB9FACB-04C7-3C5D-EA71-60764CD333D0}\",0,1\r\n" +
+"\"VCRUNTIME140.dll\",\"14.16.27033.0\",86016,1563486943,105788,\"vcruntime140.amd64.pdb\",\"{AF138C3F-2933-4097-8883-C1071B13375E}\",0,1\r\n" +
+"\r\n" +
+"sqlservr.exe,7ef4ea08-777a-43b7-8bce-4da6f0fa43c7,2\r\n" +
+"\"KERNELBASE.dll\",\"10.0.19041.662\",2920448,3965251605,2936791,\"kernelbase.pdb\",\"{1FBE0B2B-89D1-37F0-1510-431FFFBA123E}\",0,1\n" +
+"\"kernel32.dll\",\"10.0.19041.662\",774144,1262097423,770204,\"kernel32.pdb\",\"{54448D8E-EFC5-AB3C-7193-D2C7A6DF9008}\",0,1\r\n");
+
+            var paths = SymSrvHelpers.GetFolderPathsForPDBs(
+                "srv*https://msdl.microsoft.com/download/symbols",
+                ret.Values.ToList()
+                );
+
+            Assert.Equal(5, paths.Count);
+        }
+
+        /// <summary>
+        /// End-to-end test with stacks being resolved based on symbols from symsrv.
+        /// </summary>
+        [Fact]
+        public void E2ESymSrv()
+        {
+            using (var csr = new StackResolver())
+            {
+                var pdbPath = @"srv*https://msdl.microsoft.com/download/symbols";
+
+                var input = @"ntdll+0x9F7E4
+KERNELBASE+0x38973
+VCRUNTIME140+0xB8F0
+ntdll+0xA479F
+ntdll+0x4BEF
+ntdll+0x89E6
+KERNELBASE+0x396C9
+" +
+"\"ntdll.dll\",\"10.0.17763.1490\",2019328,462107166,2009368,\"ntdll.pdb\",\"{C374E059-5793-9B92-6525-386A66A2D3F5}\",0,1\r\n" +
+"\"KERNELBASE.dll\",\"10.0.17763.1518\",2707456,4281343292,2763414,\"kernelbase.pdb\",\"{E77E26E7-D1C4-72BB-2C05-DD17624A9E58}\",0,1\r\n" +
+"\"VCRUNTIME140.dll\",\"14.16.27033.0\",86016,1563486943,105788,\"vcruntime140.amd64.pdb\",\"{AF138C3F-2933-4097-8883-C1071B13375E}\",0,1\r\n";
+
+                var ret = csr.ResolveCallstacks(
+                                    input,
+                                    pdbPath,
+                                    false,
+                                    null,
+                                    false,
+                                    false,
+                                    true,
+                                    false,
+                                    true,
+                                    false,
+                                    false,
+                                    null);
+
+                var expected = @"ntdll!NtWaitForSingleObject+20
+KERNELBASE!WaitForSingleObjectEx+147
+VCRUNTIME140!__C_specific_handler+160	(d:\agent\_work\2\s\src\vctools\crt\vcruntime\src\eh\riscchandler.cpp:290)
+ntdll!RtlpExecuteHandlerForException+15
+ntdll!RtlDispatchException+1039
+ntdll!RtlRaiseException+790
+KERNELBASE!RaiseException+105
+" +
+"\"ntdll.dll\",\"10.0.17763.1490\",2019328,462107166,2009368,\"ntdll.pdb\",\"{C374E059-5793-9B92-6525-386A66A2D3F5}\",0,1\r\n" +
+"\"KERNELBASE.dll\",\"10.0.17763.1518\",2707456,4281343292,2763414,\"kernelbase.pdb\",\"{E77E26E7-D1C4-72BB-2C05-DD17624A9E58}\",0,1\r\n" +
+"\"VCRUNTIME140.dll\",\"14.16.27033.0\",86016,1563486943,105788,\"vcruntime140.amd64.pdb\",\"{AF138C3F-2933-4097-8883-C1071B13375E}\",0,1";
+
+                Assert.Equal(expected.Trim(), ret.Trim());
+            }
+        }
     }
 }

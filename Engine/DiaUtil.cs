@@ -135,6 +135,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                                 if (Directory.Exists(currPath))
                                 {
                                     var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                                    if (!foundFiles.Any())
+                                    {
+                                        // repeat the search but with a more relaxed filter. this (somewhat hacky) consideration is required
+                                        // for modules like vcruntime140.dll where the PDB name is actually vcruntime140.amd64.pdb
+                                        foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".*.pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                                    }
+
                                     if (foundFiles.Any())
                                     {
                                         if (cachePDB)
