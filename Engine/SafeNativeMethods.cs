@@ -34,6 +34,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System;
     using System.Runtime.InteropServices;
     using System.Security;
+    using System.Text;
 
     [SuppressUnmanagedCodeSecurityAttribute]
     internal class SafeNativeMethods
@@ -114,5 +115,26 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             return true;
         }
+
+        [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
+        public static extern bool SymFindFileInPath(IntPtr hProcess,
+            [MarshalAs(UnmanagedType.LPWStr)] string SearchPath,
+            [MarshalAs(UnmanagedType.LPWStr)] string FileName,
+            IntPtr id,
+            Int32 two,
+            Int32 three,
+            Int32 flags,
+            [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder filePath,
+            IntPtr callback,
+            IntPtr context);
+
+        [DllImport("dbghelp.dll")]
+        public static extern bool SymCleanup(IntPtr hProcess);
+
+        [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
+        public static extern bool SymInitialize(
+            IntPtr hProcess,
+            [MarshalAs(UnmanagedType.LPWStr)] string UserSearchPath,
+            bool fInvadeProcess);
     }
 }

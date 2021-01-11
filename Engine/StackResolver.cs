@@ -33,18 +33,15 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Dia;
     using Microsoft.Diagnostics.Runtime.Utilities;
-    using Microsoft.SqlServer.XEvent.XELite;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
-    using System.IO.MemoryMappedFiles;
     using System.Linq;
     using System.Runtime.InteropServices;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
-    using System.Threading.Tasks;
     using System.Xml;
 
     public class StackResolver : IDisposable
@@ -57,12 +54,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         public List<ModuleInfo> LoadedModules = new List<ModuleInfo>();
 
         /// <summary>
-        /// This holds the mapping of the various DLL exports for a module and the address (offset) for each such export
-        /// Only populated if the user provides the 'image path' to the DLLs
-        /// </summary>
-        Dictionary<string, Dictionary<int, ExportedSymbol>> _DLLOrdinalMap;
-
-        /// <summary>
         /// A cache of already resolved addresses
         /// </summary>
         Dictionary<string, string> cachedSymbols = new Dictionary<string, string>();
@@ -72,6 +63,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// </summary>
         ReaderWriterLockSlim rwLockCachedSymbols = new ReaderWriterLockSlim();
 
+        DLLOrdinalHelper dllMapHelper = new DLLOrdinalHelper();
+
         /// <summary>
         /// Status message - populated during associated long-running operations
         /// </summary>
@@ -80,243 +73,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// Internal counter used to implement progress reporting
         /// </summary>
-        private int globalCounter = 0;
+        internal int globalCounter = 0;
 
-        private bool cancelRequested = false;
-
-        private static object _syncRoot = new object();
+        internal bool cancelRequested = false;
 
         /// <summary>
         /// Percent completed - populated during associated long-running operations
         /// </summary>
         public int PercentComplete;
-
-        /// <summary>
-        /// This function loads DLLs from a specified path, so that we can then build the DLL export's ordinal / address map
-        /// </summary>
-        /// <param name="callstack"></param>
-        /// <param name="recurse"></param>
-        /// <param name="dllPaths"></param>
-        /// <returns></returns>
-        private string LoadDllsIfApplicable(string callstack, bool recurse, List<string> dllPaths)
-        {
-            if (dllPaths == null)
-            {
-                return callstack;
-            }
-
-            _DLLOrdinalMap = new Dictionary<string, Dictionary<int, ExportedSymbol>>();
-
-            // first we seek out distinct module names in this call stack
-            // note that such frames will only be seen in the call stack when trace flag 3656 is enabled, but there were no PDBs in the BINN folder
-            // sample frames are given below
-            // sqldk.dll!Ordinal947+0x25f
-            // sqldk.dll!Ordinal699 + 0x5f
-            // sqlmin.dll!Ordinal1634 + 0x76c
-
-            // More recent patterns which we choose not to support, because in these cases the module+offset is cleanly represented and it does symbolize nicely
-            // 00007FF818405E70 Module(sqlmin+0000000001555E70) (Ordinal1877 + 00000000000004B0)                                  
-            // 00007FF81840226A Module(sqlmin+000000000155226A) (Ordinal1261 + 00000000000071EA)                                  
-            // 00007FF81555A663 Module(sqllang+0000000000C6A663) (Ordinal1203 + 0000000000005E33)
-
-            // define a regex to identify such ordinal based frames
-            var rgxOrdinalNotation = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*(0[xX])*");
-            var matchednotations = rgxOrdinalNotation.Matches(callstack);
-
-            var moduleNames = new List<string>();
-            if (matchednotations.Count > 0)
-            {
-                foreach (Match match in matchednotations)
-                {
-                    var currmodule = match.Groups["module"].Value;
-                    if (!moduleNames.Contains(currmodule))
-                    {
-                        moduleNames.Add(currmodule);
-                    }
-                }
-            }
-
-            // then we see if there is a matched DLL in any of the paths we have
-            foreach (var currmodule in moduleNames)
-            {
-                foreach (var currPath in dllPaths)
-                {
-                    var foundFiles = Directory.EnumerateFiles(currPath, currmodule + ".dll", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                    if (foundFiles.Any())
-                    {
-                        _DLLOrdinalMap.Add(currmodule, StackResolver.GetExports(foundFiles.First()));
-
-                        break;
-                    }
-                }
-            }
-
-            // finally do a pattern based replace
-            // the replace method calls a delegate (ReplaceOrdinalWithRealOffset) which figures out the start address of the ordinal and 
-            // then computes the actual offset
-            var fullpattern = new Regex(@"(?<module>\w+)(\.dll)*!Ordinal(?<ordinal>[0-9]+)\s*\+\s*(0[xX])*(?<offset>[0-9a-fA-F]+)\s*");
-            return fullpattern.Replace(callstack, ReplaceOrdinalWithRealOffset);
-        }
-
-        /// <summary>
-        /// Read a XEL file, consume all callstacks, optionally bucketize them, and in all cases,
-        /// return the information as equivalent XML
-        /// </summary>
-        /// <param name="xelFiles">List of paths to XEL files to read</param>
-        /// <param name="bucketize">Boolean, whether to combine identical callstack patterns into the same "bucket"</param>
-        /// <returns>A tuple with the count of events and XML equivalent of the histogram corresponding to these events</returns>
-        public Tuple<int, string> ExtractFromXEL(string[] xelFiles, bool bucketize)
-        {
-            if (xelFiles == null)
-            {
-                return new Tuple<int, string>(0, string.Empty);
-            }
-
-            this.cancelRequested = false;
-
-            var callstackSlots = new Dictionary<string, long>();
-            var callstackRaw = new Dictionary<string, string>();
-            var xmlEquivalent = new StringBuilder();
-
-            // the below feels quite hacky. Unfortunately till such time that we have strong typing in XELite I believe this is unavoidable
-            var relevantKeyNames = new string[] { "callstack", "call_stack", "stack_frames" };
-
-            foreach (var xelFileName in xelFiles)
-            {
-                if (File.Exists(xelFileName))
-                {
-                    this.StatusMessage = $@"Reading {xelFileName}...";
-
-                    var xeStream = new XEFileEventStreamer(xelFileName);
-
-                    xeStream.ReadEventStream(
-                        () =>
-                        {
-                            return Task.CompletedTask;
-                        },
-                        evt =>
-                        {
-                            var allStacks = (from actTmp in evt.Actions
-                                             where relevantKeyNames.Contains(actTmp.Key.ToLower(CultureInfo.CurrentCulture))
-                                             select actTmp.Value as string)
-                                                .Union(
-                                                from fldTmp in evt.Fields
-                                                where relevantKeyNames.Contains(fldTmp.Key.ToLower(CultureInfo.CurrentCulture))
-                                                select fldTmp.Value as string);
-
-                            foreach (var callStackString in allStacks)
-                            {
-                                if (string.IsNullOrEmpty(callStackString))
-                                {
-                                    continue;
-                                }
-
-                                if (bucketize)
-                                {
-                                    lock (callstackSlots)
-                                    {
-                                        if (!callstackSlots.ContainsKey(callStackString))
-                                        {
-                                            callstackSlots.Add(callStackString, 1);
-                                        }
-                                        else
-                                        {
-                                            callstackSlots[callStackString]++;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    var evtId = string.Format(CultureInfo.CurrentCulture,
-                                        "File: {0}, Timestamp: {1}, UUID: {2}:",
-                                        xelFileName,
-                                        evt.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.CurrentCulture),
-                                        evt.UUID);
-
-                                    lock (callstackRaw)
-                                    {
-                                        if (!callstackRaw.ContainsKey(evtId))
-                                        {
-                                            callstackRaw.Add(evtId, callStackString);
-                                        }
-                                        else
-                                        {
-                                            callstackRaw[evtId] += $"{Environment.NewLine}{callStackString}";
-                                        }
-                                    }
-                                }
-                            }
-
-                            return Task.CompletedTask;
-                        },
-                        CancellationToken.None).Wait();
-                }
-            }
-
-            this.StatusMessage = "Finished reading file(s), finalizing output...";
-
-            int finalEventCount;
-
-            if (bucketize)
-            {
-                xmlEquivalent.AppendLine("<HistogramTarget>");
-                this.globalCounter = 0;
-
-                foreach (var item in callstackSlots.OrderByDescending(key => key.Value))
-                {
-                    xmlEquivalent.AppendFormat(CultureInfo.CurrentCulture,
-                        "<Slot count=\"{0}\"><value>{1}</value></Slot>",
-                        item.Value,
-                        item.Key);
-
-                    xmlEquivalent.AppendLine();
-
-                    this.globalCounter++;
-                    this.PercentComplete = (int) ((double)this.globalCounter / callstackSlots.Count * 100.0);
-                }
-
-                xmlEquivalent.AppendLine("</HistogramTarget>");
-
-                finalEventCount = callstackSlots.Count;
-            }
-            else
-            {
-                xmlEquivalent.AppendLine("<Events>");
-                this.globalCounter = 0;
-
-                var hasOverflow = false;
-
-                foreach (var item in callstackRaw.OrderBy(key => key.Key))
-                {
-                    if (xmlEquivalent.Length < int.MaxValue * 0.90)
-                    {
-                        xmlEquivalent.AppendFormat(CultureInfo.CurrentCulture,
-                            "<event key=\"{0}\"><action name='callstack'><value>{1}</value></action></event>",
-                            item.Key,
-                            item.Value);
-
-                        xmlEquivalent.AppendLine();
-                    }
-                    else
-                    {
-                        hasOverflow = true;
-                    }
-
-                    this.globalCounter++;
-                    this.PercentComplete = (int)((double)this.globalCounter / callstackRaw.Count * 100.0);
-                }
-
-                if (hasOverflow) xmlEquivalent.AppendLine("<!-- WARNING: output was truncated due to size limits -->");
-
-                xmlEquivalent.AppendLine("</Events>");
-
-                finalEventCount = callstackRaw.Count;
-            }
-
-            this.StatusMessage = $@"Finished processing {xelFiles.Length} XEL files";
-
-            return new Tuple<int, string>(finalEventCount, xmlEquivalent.ToString());
-        }
 
         public void CancelRunningTasks()
         {
@@ -324,83 +88,17 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         }
 
         /// <summary>
-        /// This delegate is invoked by the Replace function and is used to compute the effective offset from module load address
-        /// based on ordinal start address and original offset
+        /// Public method which to help import XEL files
         /// </summary>
-        /// <param name="mtch"></param>
+        /// <param name="xelFiles">List of paths to XEL files to read</param>
+        /// <param name="bucketize">Boolean, whether to combine identical callstack patterns into the same "bucket"</param>
         /// <returns></returns>
-        internal string ReplaceOrdinalWithRealOffset(Match mtch)
+        public Tuple<int, string> ExtractFromXEL(string[] xelFiles,
+            bool bucketize)
         {
-            var moduleName = mtch.Groups["module"].Value;
-
-            if (!_DLLOrdinalMap.ContainsKey(moduleName))
-            {
-                return mtch.Value;
-            }
-
-            uint offsetSpecified = Convert.ToUInt32(mtch.Groups["offset"].Value, 16);
-
-            return string.Format(CultureInfo.CurrentCulture,
-                "{0}.dll+0x{1:X}{2}",
-                moduleName,
-                _DLLOrdinalMap[moduleName][int.Parse(mtch.Groups["ordinal"].Value, CultureInfo.CurrentCulture)].Address + offsetSpecified,
-                Environment.NewLine);
-        }
-
-        /// <summary>
-        /// Helper function to load a DLL and then lookup exported functions. For this we use CLRMD and specifically the PEHeader class
-        /// </summary>
-        /// <param name="DLLPath"></param>
-        /// <returns></returns>
-        public static Dictionary<int, ExportedSymbol> GetExports(string DLLPath)
-        {
-            // this is the placeholder for the final mapping of ordinal # to address map
-            Dictionary<int, ExportedSymbol> exports = null;
-
-            using (var dllStream = new FileStream(DLLPath, FileMode.Open, FileAccess.Read))
-            {
-                using (var dllImage = new PEImage(dllStream))
-                {
-                    var dir = dllImage.PEHeader.ExportTableDirectory;
-                    var offset = dllImage.RvaToOffset(Convert.ToInt32(dir.RelativeVirtualAddress));
-
-                    using (var mmf = MemoryMappedFile.CreateFromFile(dllStream, null, 0, MemoryMappedFileAccess.Read, null, HandleInheritability.None, false))
-                    {
-                        using (var mmfAccessor = mmf.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read))
-                        {
-                            mmfAccessor.Read(offset, out ImageExportDirectory exportDirectory);
-
-                            var count = exportDirectory.NumberOfFunctions;
-                            exports = new Dictionary<int, ExportedSymbol>(count);
-
-                            var namesOffset = exportDirectory.AddressOfNames != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfNames) : 0;
-                            var ordinalOffset = exportDirectory.AddressOfOrdinals != 0 ? dllImage.RvaToOffset(exportDirectory.AddressOfOrdinals) : 0;
-                            var functionsOffset = dllImage.RvaToOffset(exportDirectory.AddressOfFunctions);
-
-                            var ordinalBase = (int)exportDirectory.Base;
-
-                            for (uint funcOrdinal = 0; funcOrdinal < count; funcOrdinal++)
-                            {
-                                // read function address
-                                var address = mmfAccessor.ReadUInt32(functionsOffset + funcOrdinal * 4);
-
-                                if (0 != address)
-                                {
-                                    exports.Add((int)(ordinalBase + funcOrdinal), new ExportedSymbol
-                                    {
-                                        Name = string.Format(CultureInfo.CurrentCulture,
-                                            "Ordinal{0}",
-                                            ordinalBase + funcOrdinal),
-                                        Address = address
-                                    });
-                                }
-                            }
-                        }
-                    }
-                }
-
-                return exports;
-            }
+            return XELHelper.ExtractFromXEL(this,
+                xelFiles,
+                bucketize);
         }
 
         /// <summary>
@@ -444,37 +142,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             return retval;
-        }
-
-        /// <summary>
-        /// Find out distinct module names in a given stack. This is used to later load PDBs and optionally DLLs
-        /// </summary>
-        /// <param name="callStack"></param>
-        /// <returns></returns>
-        private static List<string> EnumModuleNames(string[] callStack)
-        {
-            List<string> uniqueModuleNames = new List<string>();
-            var reconstructedCallstack = new StringBuilder();
-            foreach (var frame in callStack)
-            {
-                reconstructedCallstack.AppendLine(frame);
-            }
-
-            // using the ".dll!0x" to locate the module names
-            var rgxModuleName = new Regex(@"(?<module>\w+)((\.(dll|exe))*(!(?<symbolizedfunc>.+))*)*\s*\+(0[xX])*");
-            var matchedModuleNames = rgxModuleName.Matches(reconstructedCallstack.ToString());
-
-            foreach (Match moduleMatch in matchedModuleNames)
-            {
-                var actualModuleName = moduleMatch.Groups["module"].Value;
-
-                if (!uniqueModuleNames.Contains(actualModuleName))
-                {
-                    uniqueModuleNames.Add(actualModuleName);
-                }
-            }
-
-            return uniqueModuleNames;
         }
 
         /// <summary>
@@ -539,7 +206,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                                 myDIAsession.findLinesByRVA(rva, 0, out IDiaEnumLineNumbers enumLineNums);
 
-                                string tmpsourceInfo = GetSourceInfo(enumLineNums,
+                                string tmpsourceInfo = DiaUtil.GetSourceInfo(enumLineNums,
                                     _diautils[matchAlreadySymbolized.Groups["module"].Value].HasSourceInfo);
 
                                 if (tmpOrdinal > 0)
@@ -638,99 +305,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             offset = (uint)(virtAddress - matchedModule.First().BaseAddress);
 
             return true;
-        }
-
-        /// <summary>
-        /// Internal helper function to return the symbolized frame text (not including source info)
-        /// </summary>
-        /// <param name="moduleName">Module name for the current frame</param>
-        /// <param name="mysym">DIA symbol object being "symbolized"</param>
-        /// <param name="useUndecorateLogic">Whether to "undecorate" the symbol name - required for public PDBs</param>
-        /// <param name="includeOffset">Boolean, whether to include the offset within the function in the output</param>
-        /// <param name="displacement">Integer offset into the function</param>
-        /// <returns></returns>
-        private static string GetSymbolizedFrame(string moduleName,
-            IDiaSymbol mysym,
-            bool useUndecorateLogic,
-            bool includeOffset,
-            int displacement
-            )
-        {
-            string funcname2;
-
-            if (!useUndecorateLogic)
-            {
-                funcname2 = mysym.name;
-            }
-            else
-            {
-                // refer https://msdn.microsoft.com/en-us/library/kszfk0fs.aspx
-                // UNDNAME_NAME_ONLY == 0x1000: Gets only the name for primary declaration; returns just [scope::]name. Expands template params. 
-                mysym.get_undecoratedNameEx(0x1000, out funcname2);
-
-                // catch-all / fallback
-                if (string.IsNullOrEmpty(funcname2))
-                {
-                    funcname2 = mysym.name;
-                }
-            }
-
-            string offsetStr = string.Empty;
-
-            if (includeOffset)
-            {
-                offsetStr = string.Format(CultureInfo.CurrentCulture,
-                    "+{0}",
-                    displacement);
-            }
-
-            return string.Format(CultureInfo.CurrentCulture,
-                "{0}!{1}{2}",
-                moduleName,
-                funcname2,
-                offsetStr);
-        }
-
-        /// <summary>
-        /// Internal helper function to obtain source information for given symbol
-        /// </summary>
-        /// <param name="enumLineNums">Input object enumerating line number(s)</param>
-        /// <param name="pdbHasSourceInfo">Boolean, whether the PDB for this module has source info</param>
-        /// <returns></returns>
-        private static string GetSourceInfo(IDiaEnumLineNumbers enumLineNums,
-            bool pdbHasSourceInfo)
-        {
-            var sbOutput = new StringBuilder();
-
-            // only if we found line number information should we append to output 
-            if (enumLineNums.count > 0)
-            {
-                for (uint tmpOrdinal = 0; tmpOrdinal < enumLineNums.count; tmpOrdinal++)
-                {
-                    if (tmpOrdinal > 0)
-                    {
-                        sbOutput.Append(" -- WARN: multiple matches -- ");
-                    }
-
-                    sbOutput.Append(string.Format(CultureInfo.CurrentCulture,
-                        "({0}:{1})",
-                        enumLineNums.Item(tmpOrdinal).sourceFile.fileName,
-                        enumLineNums.Item(tmpOrdinal).lineNumber));
-
-                    Marshal.FinalReleaseComObject(enumLineNums.Item(tmpOrdinal));
-                }
-            }
-            else
-            {
-                if (pdbHasSourceInfo)
-                {
-                    sbOutput.Append("-- WARN: unable to find source info --");
-                }
-            }
-
-            Marshal.FinalReleaseComObject(enumLineNums);
-
-            return sbOutput.ToString();
         }
 
         /// <summary>
@@ -835,12 +409,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 _diautils[moduleName]._IDiaSession.findLinesByRVA(rva, 0, out IDiaEnumLineNumbers enumLineNums);
 
-                sourceInfo = GetSourceInfo(enumLineNums,
+                sourceInfo = DiaUtil.GetSourceInfo(enumLineNums,
                     pdbHasSourceInfo
                     );
             }
 
-            var symbolizedFrame = GetSymbolizedFrame(moduleName,
+            var symbolizedFrame = DiaUtil.GetSymbolizedFrame(moduleName,
                 mysym,
                 useUndecorateLogic,
                 includeOffset,
@@ -850,7 +424,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             string inlineFrameAndSourceInfo = string.Empty;
             if (showInlineFrames && pdbHasSourceInfo)
             {
-                inlineFrameAndSourceInfo = ProcessInlineFrames(
+                inlineFrameAndSourceInfo = DiaUtil.ProcessInlineFrames(
                     moduleName,
                     useUndecorateLogic,
                     includeOffset,
@@ -874,78 +448,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             this.rwLockCachedSymbols.ExitWriteLock();
 
             return result;
-        }
-
-        /// <summary>
-        /// Internal helper function to find any inline frames at a given RVA
-        /// </summary>
-        /// <param name="moduleName">Module name for current frame</param>
-        /// <param name="useUndecorateLogic">Whether to "undecorate" the symbol (public symbols only)</param>
-        /// <param name="includeOffset">Boolean, whether to include function offset in output</param>
-        /// <param name="includeSourceInfo">Boolean, whether to include source info in output</param>
-        /// <param name="rva">Relative Virtual Address at which potential inline frames need to be looked up</param>
-        /// <param name="parentSym">The parent DIA symbol object to use for inline frame lookup</param>
-        /// <param name="pdbHasSourceInfo">Boolean, whether the PDB for this module has source info</param>
-        /// <returns></returns>
-        private static string ProcessInlineFrames(
-            string moduleName,
-            bool useUndecorateLogic,
-            bool includeOffset,
-            bool includeSourceInfo,
-            uint rva,
-            IDiaSymbol parentSym,
-            bool pdbHasSourceInfo
-            )
-        {
-            var sbInline = new StringBuilder();
-
-            try
-            {
-                var inlineRVA = rva - 1;
-
-                parentSym.findInlineFramesByRVA(
-                    inlineRVA,
-                    out IDiaEnumSymbols enumInlinees);
-
-                foreach (IDiaSymbol inlineFrame in enumInlinees)
-                {
-                    var inlineeOffset = (int)(rva - inlineFrame.relativeVirtualAddress);
-
-                    sbInline.Append("(Inline Function) ");
-                    sbInline.Append(GetSymbolizedFrame(
-                        moduleName,
-                        inlineFrame,
-                        useUndecorateLogic,
-                        includeOffset,
-                        inlineeOffset
-                        ));
-
-                    if (includeSourceInfo)
-                    {
-                        inlineFrame.findInlineeLinesByRVA(
-                        inlineRVA,
-                        0,
-                        out IDiaEnumLineNumbers enumLineNums);
-
-                        sbInline.Append("\t");
-                        sbInline.Append(GetSourceInfo(enumLineNums,
-                            pdbHasSourceInfo
-                            ));
-                    }
-
-                    Marshal.ReleaseComObject(inlineFrame);
-
-                    sbInline.AppendLine();
-                }
-
-                Marshal.ReleaseComObject(enumInlinees);
-            }
-            catch (COMException)
-            {
-                sbInline.AppendLine(" -- WARN: Unable to process inline frames");
-            }
-
-            return sbInline.ToString();
         }
 
         /// <summary>
@@ -1016,74 +518,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         }
 
         /// <summary>
-        /// This function builds up the PDB map, by searching for matched PDBs (based on name) and constructing the DIA session for each
-        /// It is VERY important to specify the PDB search paths correctly, because there is no 'signature' information available 
-        /// to match the PDB in any automatic way.
-        /// </summary>
-        /// <param name="_diautils">Internal dictionary object to hold cached instances of the PDB map</param>
-        /// <param name="rootPaths">Symbol search paths</param>
-        /// <param name="recurse">Boolean, whether to recursively search for matching PDBs</param>
-        /// <param name="moduleNames">List of modules to search PDBs for</param>
-        /// <param name="cachePDB">Cache a copy of PDBs into %TEMP%\SymCache</param>
-        private static bool LocateandLoadPDBs(Dictionary<string, DiaUtil> _diautils,
-            string rootPaths,
-            bool recurse,
-            List<string> moduleNames,
-            bool cachePDB)
-        {
-            // loop through each module, trying to find matched PDB files
-            var splitRootPaths = rootPaths.Split(';');
-            foreach (string currentModule in moduleNames)
-            {
-                if (!_diautils.ContainsKey(currentModule))
-                {
-                    // check if the PDB is already cached locally
-                    var cachedPDBFile = Path.Combine(Path.GetTempPath(), "SymCache", currentModule + ".pdb");
-                    lock (_syncRoot)
-                    {
-                        if (!File.Exists(cachedPDBFile))
-                        {
-                            foreach (var currPath in splitRootPaths)
-                            {
-                                if (Directory.Exists(currPath))
-                                {
-                                    var foundFiles = Directory.EnumerateFiles(currPath, currentModule + ".pdb", recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                                    if (foundFiles.Any())
-                                    {
-                                        if (cachePDB)
-                                        {
-                                            File.Copy(foundFiles.First(), cachedPDBFile);
-                                        }
-                                        else
-                                        {
-                                            cachedPDBFile = foundFiles.First();
-                                        }
-
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (File.Exists(cachedPDBFile))
-                    {
-                        try
-                        {
-                            _diautils.Add(currentModule, new DiaUtil(cachedPDBFile));
-                        }
-                        catch (COMException)
-                        {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// This is what the caller will invoke to resolve symbols
         /// </summary>
         /// <param name="inputCallstackText">the input call stack text or XML</param>
@@ -1112,6 +546,12 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             bool cachePDB,
             string outputFilePath)
         {
+            //return SymSrvHelpers.GetLocalSymbolFolderForModule(
+            //    "ntdll.dll",
+            //    symPath,
+            //    "{1EB9FACB-04C7-3C5D-EA71-60764CD333D0}",
+            //    1);
+
             this.cancelRequested = false;
 
             this.cachedSymbols.Clear();
@@ -1252,6 +692,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
             this.StatusMessage = "Resolving callstacks to symbols...";
             this.globalCounter = 0;
+
+            // (re-)initialize the DLL Ordinal Map
+            this.dllMapHelper.Initialize();
 
             // Create a pool of threads to process in parallel
             int numThreads = Math.Min(listOfCallStacks.Count, Environment.ProcessorCount);
@@ -1398,10 +841,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 // split the callstack into lines, and for each line try to resolve
                 string ordinalresolvedstack;
 
-                lock (_syncRoot)
-                {
-                    ordinalresolvedstack = LoadDllsIfApplicable(currstack.Callstack, tp.searchDLLRecursively, tp.dllPaths);
-                }
+                ordinalresolvedstack = this.dllMapHelper.LoadDllsIfApplicable(currstack.Callstack,
+                    tp.searchDLLRecursively,
+                    tp.dllPaths);
 
                 // sometimes we see call stacks which are arranged horizontally (this typically is seen when copy-pasting directly
                 // from the SSMS XEvent window (copying the callstack field without opening it in its own viewer)
@@ -1414,10 +856,10 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 callStackLines = PreProcessVAs(callStackLines);
 
                 // locate the PDBs and populate their DIA session helper classes
-                if (LocateandLoadPDBs(_diautils,
+                if (DiaUtil.LocateandLoadPDBs(_diautils,
                     tp.symPath,
                     tp.searchPDBsRecursively,
-                    EnumModuleNames(callStackLines),
+                    Preprocessors.EnumModuleNames(callStackLines),
                     tp.cachePDB))
                 {
                     // resolve symbols by using DIA
