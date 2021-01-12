@@ -815,11 +815,15 @@ Wdf01000!FxPkgPnp::PowerPolicyCanChildPowerUp+143",
 "\"KERNELBASE.dll\",\"10.0.19041.662\",2920448,3965251605,2936791,\"kernelbase.pdb\",\"{1FBE0B2B-89D1-37F0-1510-431FFFBA123E}\",0,1\n" +
 "\"kernel32.dll\",\"10.0.19041.662\",774144,1262097423,770204,\"kernel32.pdb\",\"{54448D8E-EFC5-AB3C-7193-D2C7A6DF9008}\",0,1\r\n");
 
-            var paths = SymSrvHelpers.GetFolderPathsForPDBs(
-                "srv*https://msdl.microsoft.com/download/symbols",
-                ret.Values.ToList());
+            using (var csr = new StackResolver())
+            {
+                var paths = SymSrvHelpers.GetFolderPathsForPDBs(
+                    csr,
+                    "srv*https://msdl.microsoft.com/download/symbols",
+                    ret.Values.ToList());
 
-            Assert.Equal(5, paths.Count);
+                Assert.Equal(5, paths.Count);
+            }
         }
 
         /// <summary>

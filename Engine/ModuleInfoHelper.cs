@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -22,10 +23,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             var retval = new Dictionary<string, Symbol>();
 
-            if (string.IsNullOrEmpty(input))
-            {
-                return retval;
-            }
+            Contract.Requires(!string.IsNullOrEmpty(input));
 
             // split into multiple lines
             var lines = input.Split('\n');
@@ -33,7 +31,6 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             foreach(var line in lines)
             {
                 Guid pdbGuid = Guid.Empty;
-                int pdbAge = int.MinValue;
                 string moduleName = null;
                 string pdbName = null;
 
@@ -69,6 +66,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     }
                 }
 
+                int pdbAge = int.MinValue;
                 // assumption is that last field is pdbAge - TODO parameterize
                 _ = int.TryParse(fields[fields.Length - 1], out pdbAge);
 

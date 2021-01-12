@@ -34,6 +34,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using Microsoft.SqlServer.XEvent.XELite;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.Contracts;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -55,10 +56,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             string[] xelFiles,
             bool bucketize)
         {
-            if (xelFiles == null)
-            {
-                return new Tuple<int, string>(0, string.Empty);
-            }
+            Contract.Requires(xelFiles != null);
 
             parent.cancelRequested = false;
 

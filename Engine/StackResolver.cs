@@ -559,7 +559,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             {
                 // if the user has provided such a list of module info, proceed to actually 
                 // use dbghelp.dll / symsrv.dll to download thos PDBs and get local paths for them
-                var paths = SymSrvHelpers.GetFolderPathsForPDBs(symPath, syms.Values.ToList());
+                var paths = SymSrvHelpers.GetFolderPathsForPDBs(this, symPath, syms.Values.ToList());
 
                 // we then "inject" those local PDB paths as higher priority than any possible user provided paths
                 symPath = string.Join(";", paths) + ";" + symPath;
@@ -767,8 +767,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         }
                         else
                         {
-                            outStream.WriteLine("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
-                            break;
+                            if (!string.IsNullOrEmpty(currstack.Callstack.Trim()))
+                            {
+                                outStream.WriteLine("WARNING: No output to show. This may indicate an internal error!");
+                                break;
+                            }
                         }
 
                         this.globalCounter++;
@@ -793,8 +796,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                     }
                     else
                     {
-                        finalCallstack = new StringBuilder("ERROR: Unable to resolve call stacks - is the file msdia140.dll registered using REGSVR32?");
-                        break;
+                        if (!string.IsNullOrEmpty(currstack.Callstack))
+                        {
+                            finalCallstack = new StringBuilder("WARNING: No output to show. This may indicate an internal error!");
+                            break;
+                        }
                     }
 
                     this.globalCounter++;

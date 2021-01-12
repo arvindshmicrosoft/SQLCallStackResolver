@@ -34,6 +34,8 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.Diagnostics.Contracts;
+    using System.Globalization;
     using System.IO;
     using System.Runtime.InteropServices;
     using System.Text;
@@ -105,27 +107,32 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// Public method to return local PDB file paths for specified symbols.
         /// </summary>
+        /// <param name="parent">Parent StackResolver instance, mainly used for progress reporting.</param>
         /// <param name="symPath">Symbol path, in the same notation as supported by WinDbg. 
         /// Multiple components are supported if separated by semicolon chars.</param>
         /// <param name="syms">List of Symbol objects, each containing relevant PDB GUID and age.</param>
         /// <returns></returns>
-        public static List<string> GetFolderPathsForPDBs(string symPath,
+        public static List<string> GetFolderPathsForPDBs(
+            StackResolver parent,
+            string symPath,
             List<Symbol> syms)
         {
             var retval = new List<string>();
 
-            if (syms is null)
-            {
-                return retval;
-            }
+            Contract.Requires(null != syms);
+            Contract.Requires(null != parent);
 
             if (!InitSymSrv(symPath))
             {
                 return retval;
             }
 
+            int progress = 0;
             foreach(var sym in syms)
             {
+                parent.StatusMessage = string.Format(CultureInfo.CurrentCulture,
+                    $"Finding local PDB path for {sym.PDBName}");
+
                 var path = GetLocalSymbolFolderForModule(sym.PDBName,
                     sym.PDBGuid,
                     sym.PDBAge);
@@ -133,7 +140,18 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 if (!string.IsNullOrEmpty(path))
                 {
                     retval.Add(Path.GetDirectoryName(path));
+
+                    parent.StatusMessage = string.Format(CultureInfo.CurrentCulture,
+                        $"Successfully found local PDB at {path}");
                 }
+                else
+                {
+                    parent.StatusMessage = string.Format(CultureInfo.CurrentCulture,
+                        $"Could not find local PDB for {sym.PDBName}");
+                }
+
+                progress++;
+                parent.PercentComplete = (int)((double) progress / syms.Count * 100.0);
             }
 
             CleanupSymSrv();
