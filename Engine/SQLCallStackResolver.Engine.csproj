@@ -168,10 +168,6 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
-    <ContentWithTargetPath Include="DbgHelp\dbgeng.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>dbgeng.dll</TargetPath>
-    </ContentWithTargetPath>
     <ContentWithTargetPath Include="DbgHelp\dbghelp.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>dbghelp.dll</TargetPath>

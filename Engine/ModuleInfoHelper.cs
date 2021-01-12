@@ -9,12 +9,23 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     public static class ModuleInfoHelper
     {
-        private static Regex rgxPDBName = new Regex(@"^(?<module>.+)(\.pdb)$", RegexOptions.IgnoreCase);
+        private static Regex rgxPDBName = new Regex(@"^(?<pdb>.+)(\.pdb)$", RegexOptions.IgnoreCase);
         private static Regex rgxFileName = new Regex(@"^(?<module>.+)\.(dll|exe)$", RegexOptions.IgnoreCase);
 
+        /// <summary>
+        /// Given a set of rows each containing several comma-separated fields, return a set of resolved Symbol
+        /// objects each of which have PDB GUID and age details.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         public static Dictionary<string, Symbol> ParseModuleInfo(string input)
         {
             var retval = new Dictionary<string, Symbol>();
+
+            if (string.IsNullOrEmpty(input))
+            {
+                return retval;
+            }
 
             // split into multiple lines
             var lines = input.Split('\n');
@@ -31,7 +42,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
                 foreach (var rawfield in fields)
                 {
-                    var field = rawfield.TrimEnd('"').TrimStart('"');
+                    var field = rawfield.Trim().TrimEnd('"').TrimStart('"');
                     Guid tmpGuid = Guid.Empty;
                     // for each field, attempt using regexes to detect file name and GUIDs
                     if (Guid.TryParse(field, out tmpGuid))
@@ -53,13 +64,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                         var matchPDBName = rgxPDBName.Match(field);
                         if (matchPDBName.Success)
                         {
-                            pdbName = matchPDBName.Groups["module"].Value;
+                            pdbName = matchPDBName.Groups["pdb"].Value;
                         }
                     }
                 }
 
                 // assumption is that last field is pdbAge - TODO parameterize
-                int.TryParse(fields[fields.Length - 1], out pdbAge);
+                _ = int.TryParse(fields[fields.Length - 1], out pdbAge);
 
                 if (string.IsNullOrEmpty(pdbName))
                 {

@@ -54,9 +54,9 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// This function loads DLLs from a specified path, so that we can then build the DLL export's ordinal / address map
         /// </summary>
-        /// <param name="callstack"></param>
-        /// <param name="recurse"></param>
-        /// <param name="dllPaths"></param>
+        /// <param name="callstack">The input (complete) call stack.</param>
+        /// <param name="recurse">Whether (or not) to recursively search for DLLs.</param>
+        /// <param name="dllPaths">List of folders to search for above DLLs.</param>
         /// <returns></returns>
         internal string LoadDllsIfApplicable(string callstack, bool recurse, List<string> dllPaths)
         {

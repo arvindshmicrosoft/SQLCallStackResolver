@@ -42,6 +42,11 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
     {
         static int processId = Process.GetCurrentProcess().Id;
 
+        /// <summary>
+        /// Wrapper around the symsrv.dll functionality to initialize the symbol load handler for this process.
+        /// </summary>
+        /// <param name="symPath">Symbol path in the WinDbg notation.</param>
+        /// <returns></returns>
         private static bool InitSymSrv(string symPath)
         {
             return SafeNativeMethods.SymInitialize((IntPtr)processId,
@@ -49,17 +54,28 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 false);
         }
 
+        /// <summary>
+        /// Un-initialize the symbol load handler for this process.
+        /// </summary>
+        /// <returns></returns>
         private static bool CleanupSymSrv()
         {
             return SafeNativeMethods.SymCleanup((IntPtr)processId);
         }
 
+        /// <summary>
+        /// Private method to locate the local path for a matching PDB. Implicitly handles symbol download if needed.
+        /// </summary>
+        /// <param name="pdbFilename">Filename (including extension) of the PDB.</param>
+        /// <param name="pdbGuid">GUID for the PDB.</param>
+        /// <param name="pdbAge">Age attribute for the PDB.</param>
+        /// <returns></returns>
         private static string GetLocalSymbolFolderForModule(string pdbFilename,
             string pdbGuid,
             int pdbAge
             )
         {
-            const int MAX_PATH = 260;
+            const int MAX_PATH = 4096;
             StringBuilder outPath = new StringBuilder(MAX_PATH);
 
             var guid = Guid.Parse(pdbGuid);
@@ -73,7 +89,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
                 buffer,
                 pdbAge,
                 0,
-                8, //SSRVOPT_GUIDPTR
+                8, // SSRVOPT_GUIDPTR
                 outPath,
                 IntPtr.Zero,
                 IntPtr.Zero);
@@ -86,10 +102,22 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             return outPath.ToString();
         }
 
+        /// <summary>
+        /// Public method to return local PDB file paths for specified symbols.
+        /// </summary>
+        /// <param name="symPath">Symbol path, in the same notation as supported by WinDbg. 
+        /// Multiple components are supported if separated by semicolon chars.</param>
+        /// <param name="syms">List of Symbol objects, each containing relevant PDB GUID and age.</param>
+        /// <returns></returns>
         public static List<string> GetFolderPathsForPDBs(string symPath,
             List<Symbol> syms)
         {
             var retval = new List<string>();
+
+            if (syms is null)
+            {
+                return retval;
+            }
 
             if (!InitSymSrv(symPath))
             {
