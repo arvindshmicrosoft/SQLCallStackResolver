@@ -113,8 +113,14 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         {
             if (allBuilds != null)
             {
-                using (var fs = new FileStream(jsonFile, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None))
+                using (var fs = new FileStream(jsonFile,
+                    FileMode.OpenOrCreate,
+                    FileAccess.Write,
+                    FileShare.None))
                 {
+                    // initially, truncate the file
+                    fs.SetLength(0);
+
                     using (var wrtr = new StreamWriter(fs))
                     {
                         foreach (var bld in allBuilds)
