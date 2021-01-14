@@ -33,6 +33,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Newtonsoft.Json;
     using System.Collections.Generic;
+    using System.Diagnostics.Contracts;
     using System.Globalization;
     using System.IO;
     using System.Linq;
@@ -137,10 +138,7 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 
         public static string GetDownloadScriptPowerShell(SQLBuildInfo bld, bool includeMarkdown)
         {
-            if (bld is null)
-            {
-                return string.Empty;
-            }
+            Contract.Requires(bld != null);
 
             var symcmds = new StringBuilder();
 
