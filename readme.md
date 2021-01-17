@@ -56,7 +56,7 @@ select name, base_address from sys.dm_os_loaded_modules where name not like '%.r
 * PDB GUID, for example `1EB9FACB-04C7-3C5D-EA71-60764CD333D0`
 * The very last comma-separated field will be taken as the PDB Age.
 
-All other fields in the line are ignored. Here is an example of a complete line with the minimum information necessary:
-`ntdll.dll,ntdll.pdb,1EB9FACB-04C7-3C5D-EA71-60764CD333D0,1`
+    All other fields in the line are ignored. Here is an example of a complete line with the minimum information necessary:
+    `ntdll.dll,ntdll.pdb,1EB9FACB-04C7-3C5D-EA71-60764CD333D0,1`
 
-When such information is included (usually after the main callstack input), it is parsed and used to retrieve PDBs from the symbol server specified. If matching PDBs are not found locally for whatever reason (wrong paths, wrong metadata, failed download etc.), the symbol resolution step will just return back the original raw input.
+    When such information is included (usually after the main callstack input), it is parsed and used to retrieve PDBs from the symbol server specified. If matching PDBs are not found locally for whatever reason (wrong paths, wrong metadata, failed download etc.), the symbol resolution step will just return back the original raw input.
