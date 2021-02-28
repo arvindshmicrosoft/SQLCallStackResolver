@@ -915,10 +915,13 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
         /// <summary>
         /// This method generates a PowerShell script to automate download of matched PDBs from the public symbol server.
         /// </summary>
-        /// <param name="dllSearchPath">Search path for DLLs</param>
+        /// <param name="dllPaths">List of paths to search for DLLs</param>
         /// <param name="recurse">Boolean, whether to recursively search for DLLs</param>
+        /// <param name="existingSymbols">Existing Symbol details, to support append-only operations</param>
         /// <returns></returns>
-        public static List<Symbol> GetSymbolDetailsForBinaries(List<string> dllPaths, bool recurse)
+        public static List<Symbol> GetSymbolDetailsForBinaries(List<string> dllPaths,
+            bool recurse,
+            List<Symbol> existingSymbols = null)
         {
             if (dllPaths == null || dllPaths.Count == 0)
             {
@@ -926,11 +929,19 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
             }
 
             var symbolsFound = new List<Symbol>();
-
-            var moduleNames = new string[] { "ntdll", "kernel32", "kernelbase", "ntoskrnl", "sqldk", "sqlmin", "sqllang", "sqltses", "sqlaccess", "qds", "hkruntime", "hkengine", "hkcompile", "sqlos", "sqlservr" };
-
-            foreach (var currentModule in moduleNames)
+            if (null != existingSymbols)
             {
+                symbolsFound.AddRange(existingSymbols);
+            }
+
+            foreach (var currentModule in Symbol.WellKnownModuleNames)
+            {
+                if (symbolsFound.Select(s => s.PDBName.ToLower()).Contains(currentModule))
+                {
+                    // we already have symbol details for this module, skip
+                    continue;
+                }
+
                 string finalFilePath = null;
 
                 foreach (var currPath in dllPaths)

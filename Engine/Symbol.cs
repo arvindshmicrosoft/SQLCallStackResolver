@@ -33,11 +33,37 @@ namespace Microsoft.SqlServer.Utils.Misc.SQLCallStackResolver
 {
     using Newtonsoft.Json;
     using System;
+    using System.Collections.Generic;
     using System.Net;
 
     public class Symbol
     {
-        public string PDBName;
+        [JsonIgnore]
+        internal static List<string> WellKnownModuleNames = new List<string> {
+                "ntdll",
+                "kernel32",
+                "kernelbase",
+                "ntoskrnl",
+                "sqldk",
+                "sqlmin",
+                "sqllang",
+                "sqltses",
+                "sqlaccess",
+                "qds",
+                "hkruntime",
+                "hkengine",
+                "hkcompile",
+                "sqlos",
+                "sqlservr",
+                "SqlServerSpatial",
+                "sqlserverspatial110",
+                "sqlserverspatial120",
+                "sqlserverspatial130",
+                "sqlserverspatial140",
+                "sqlserverspatial150"
+            };
+
+    public string PDBName;
 
         [JsonIgnore]
         public string InternalPDBName;
