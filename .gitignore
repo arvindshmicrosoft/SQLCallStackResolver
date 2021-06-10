@@ -257,3 +257,5 @@ ModelManifest.xml
 /Tests/TestCases/ImportXEL/*.xel
 /TestResults/
 Tests/TestCases/ImportXEL/base_addresses.txt
+copybinaries.ps1
+copypdbs.ps1
